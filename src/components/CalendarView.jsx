@@ -24,6 +24,14 @@ const mealTypes = [
   ['lateNight', '야식', '🌜'],
 ]
 
+const defaultMealTimes = {
+  breakfast: '08:00',
+  lunch: '11:30',
+  dinner: '18:30',
+  snack: '16:00',
+  lateNight: '22:00',
+}
+
 const stickers = [
   ['운동', '🏋️'], ['공부', '🎓'], ['회의', '📖'], ['업무', '💼'],
   ['출장', '🧳'], ['약속', '🗓️'], ['데이트', '💗'], ['병원', '🏥'],
@@ -1011,7 +1019,16 @@ function CalendarView({
                   {mealTypes.map(([key, label]) => <button className={mealType === key ? 'active' : ''} key={key} type="button" onClick={() => setMealType(key)}>{label}</button>)}
                 </div>
               </fieldset>
-              <label className="form-field"><span>식사 시간</span><input name="mealTime" type="time" defaultValue={meals[mealType]?.mine?.time || '12:00'} required /></label>
+              <label className="form-field">
+                <span>식사 시간</span>
+                <input
+                  key={mealType}
+                  name="mealTime"
+                  type="time"
+                  defaultValue={meals[mealType]?.mine?.time || defaultMealTimes[mealType]}
+                  required
+                />
+              </label>
               <div className="form-field">
                 <span>음식 사진</span>
                 <div className="meal-photo-preview-list">
