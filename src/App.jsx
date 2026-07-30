@@ -343,12 +343,12 @@ function App() {
     <div className="app-shell">
       {loading || (session && birthdayLoading) ? (
         <main className="auth-card">
-          <div className="brand-mark" aria-hidden="true"><span>♡</span></div>
+          <div className="brand-mark" aria-hidden="true"><img src="/pwa/coupledaily-brand-192.png" alt="" /></div>
           <div className="status-box">세션을 확인하고 있어요...</div>
         </main>
       ) : !session ? (
         <main className="auth-card">
-          <div className="brand-mark" aria-hidden="true"><span>♡</span></div>
+          <div className="brand-mark" aria-hidden="true"><img src="/pwa/coupledaily-brand-192.png" alt="" /></div>
           <p className="eyebrow">CoupleDaily</p>
           <>
             <h1>오늘의 마음을 함께 기록해요.</h1>
@@ -381,7 +381,7 @@ function App() {
         </main>
       ) : !birthday ? (
         <main className="auth-card birthday-card">
-          <div className="brand-mark" aria-hidden="true"><span>♡</span></div>
+          <div className="brand-mark" aria-hidden="true"><img src="/pwa/coupledaily-brand-192.png" alt="" /></div>
           <p className="eyebrow">WELCOME</p>
           <h1>{displayName}님, 생일을 알려주세요.</h1>
           <p className="intro-text">
