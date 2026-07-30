@@ -11,7 +11,7 @@ export default defineConfig({
       includeAssets: [
         'favicon.svg',
         'pwa/source-screen-icon.png',
-        'pwa/coupledaily-brand-apple.png',
+        'pwa/screen-heart-v2-apple.png',
       ],
       manifest: {
         name: 'CoupleDaily - 우리의 하루',
@@ -27,19 +27,19 @@ export default defineConfig({
         categories: ['lifestyle', 'productivity'],
         icons: [
           {
-            src: '/pwa/coupledaily-brand-192.png',
+            src: '/pwa/screen-heart-v2-192.png',
             sizes: '192x192',
             type: 'image/png',
             purpose: 'any',
           },
           {
-            src: '/pwa/coupledaily-brand-512.png',
+            src: '/pwa/screen-heart-v2-512.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'any',
           },
           {
-            src: '/pwa/coupledaily-brand-512.png',
+            src: '/pwa/screen-heart-v2-512.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'maskable',
