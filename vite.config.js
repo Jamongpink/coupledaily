@@ -10,6 +10,7 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: [
         'favicon.svg',
+        'pwa/source-screen-icon.png',
         'pwa/coupledaily-brand-apple.png',
       ],
       manifest: {
