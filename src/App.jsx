@@ -429,6 +429,7 @@ function App() {
           <main className="dashboard-main">
             {activeView === 'settings' ? (
               <SettingsView
+                userId={user.id}
                 connection={connection}
                 invite={invite}
                 partnerLoading={partnerLoading}

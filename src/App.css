@@ -2454,6 +2454,176 @@ h1 {
   margin-top: 14px;
 }
 
+.notification-settings {
+  margin-top: 14px;
+}
+
+.notification-setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.notification-setting-row > div {
+  min-width: 0;
+}
+
+.notification-setting-row strong,
+.notification-setting-row p {
+  margin: 0;
+}
+
+.notification-setting-row > div > strong {
+  font-size: 0.9rem;
+}
+
+.notification-setting-row p {
+  margin-top: 5px;
+  color: var(--muted);
+  font-size: 0.8rem;
+  line-height: 1.55;
+}
+
+.notification-switch {
+  min-width: 104px;
+  min-height: 44px;
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid #d9d5cc;
+  border-radius: 999px;
+  padding: 5px 10px 5px 6px;
+  background: #eceae4;
+  color: #6f706a;
+  cursor: pointer;
+  transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease;
+}
+
+.notification-switch > span {
+  width: 30px;
+  height: 30px;
+  display: block;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 2px 7px rgba(42, 48, 41, 0.18);
+}
+
+.notification-switch > strong {
+  font-size: 0.76rem;
+}
+
+.notification-switch.is-on {
+  border-color: #4f9c87;
+  background: #4f9c87;
+  color: #fff;
+}
+
+.notification-switch:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.notification-message {
+  margin: 12px 0 0;
+  color: #a34f3d;
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+
+.notification-message.success {
+  color: var(--primary-dark);
+}
+
+.notification-note {
+  display: block;
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
+.notification-section-list {
+  display: grid;
+  gap: 0;
+  margin-top: 18px;
+  border-top: 1px solid #ebe7dd;
+}
+
+.notification-section-list.is-disabled {
+  opacity: 0.52;
+}
+
+.notification-section-row {
+  min-height: 68px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid #efebe3;
+  padding: 10px 0;
+}
+
+.notification-section-icon {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  background: #f2f5f0;
+  font-size: 1rem;
+}
+
+.notification-section-row strong,
+.notification-section-row p {
+  margin: 0;
+}
+
+.notification-section-row strong {
+  font-size: 0.84rem;
+}
+
+.notification-section-row p {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 0.74rem;
+  line-height: 1.45;
+}
+
+.notification-section-switch {
+  width: 50px;
+  height: 30px;
+  position: relative;
+  border: 0;
+  border-radius: 999px;
+  padding: 3px;
+  background: #d9d7d0;
+  cursor: pointer;
+  transition: background-color 160ms ease;
+}
+
+.notification-section-switch > span {
+  width: 24px;
+  height: 24px;
+  display: block;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 2px 6px rgba(42, 48, 41, 0.2);
+  transition: transform 160ms ease;
+}
+
+.notification-section-switch.is-on {
+  background: var(--primary);
+}
+
+.notification-section-switch.is-on > span {
+  transform: translateX(20px);
+}
+
+.notification-section-switch:disabled {
+  cursor: not-allowed;
+}
+
 .settings-account-actions {
   display: flex;
   gap: 8px;
@@ -2502,6 +2672,42 @@ h1 {
 .delete-confirm-input {
   width: 100%;
   margin-top: 4px;
+}
+
+.delete-account-form > h2 {
+  margin-top: 6px;
+}
+
+.delete-account-form > p {
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+.delete-account-form > small {
+  display: block;
+  margin-top: 7px;
+  color: var(--muted);
+  font-size: 0.76rem;
+}
+
+.delete-account-form > small.confirmation-ready {
+  color: var(--primary-dark);
+  font-weight: 750;
+}
+
+.settings-modal-error {
+  margin: 14px 0 0;
+  border-radius: 12px;
+  background: #fff0ed;
+  color: #a34f3d;
+  padding: 11px 13px;
+  font-size: 0.82rem;
+  line-height: 1.55;
+}
+
+.settings-confirm-actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.48;
 }
 
 @media (max-width: 600px) {
@@ -2639,4 +2845,400 @@ h1 {
   .record-bars i { height: 3px; }
   .record-bars .meal-bar { width: 14px; }
   .record-bars .schedule-bar { width: 18px; }
+}
+
+/* Mobile-first polish before PWA packaging */
+@media (max-width: 600px) {
+  .dashboard-shell {
+    min-height: 100dvh;
+    padding-bottom: calc(78px + env(safe-area-inset-bottom));
+  }
+
+  .dashboard-header {
+    position: sticky;
+    z-index: 9;
+    top: 0;
+    min-height: 64px;
+    padding: 10px 16px;
+    padding-top: calc(10px + env(safe-area-inset-top));
+    backdrop-filter: blur(18px);
+  }
+
+  .mini-brand-mark {
+    width: 38px;
+    height: 38px;
+    border-radius: 13px;
+    font-size: 1.25rem;
+  }
+
+  .header-logout {
+    min-height: 40px;
+    padding: 8px 12px;
+  }
+
+  .dashboard-main {
+    padding: 22px 14px 28px;
+  }
+
+  .welcome-section h1,
+  .calendar-intro h1,
+  .goals-page-header h1,
+  .settings-header h1,
+  .diary-page-header h1 {
+    font-size: 1.65rem;
+    line-height: 1.25;
+  }
+
+  .partner-card {
+    padding: 17px;
+    border-radius: 20px;
+  }
+
+  .dashboard-card,
+  .monthly-goal-card,
+  .goal-list-card,
+  .settings-card,
+  .diary-card {
+    border-radius: 18px;
+  }
+
+  .dashboard-card {
+    min-height: 156px;
+    padding: 18px;
+  }
+
+  .birthday-summary {
+    gap: 9px;
+    margin-bottom: 14px;
+  }
+
+  .birthday-summary article {
+    min-width: 0;
+    padding: 12px 14px;
+    border-radius: 16px;
+  }
+
+  .calendar-shell {
+    padding: 12px 8px 10px;
+    border-radius: 18px;
+  }
+
+  .calendar-toolbar {
+    margin-bottom: 12px;
+  }
+
+  .calendar-toolbar button {
+    width: 42px;
+    height: 42px;
+  }
+
+  .weekday-row {
+    font-size: 0.7rem;
+  }
+
+  .calendar-grid {
+    border-radius: 10px;
+  }
+
+  .calendar-day {
+    min-height: 54px;
+    padding: 5px 4px;
+  }
+
+  .calendar-day-number {
+    gap: 2px;
+    font-size: 0.72rem;
+  }
+
+  .calendar-day-badges {
+    gap: 1px;
+  }
+
+  .anniversary-heart,
+  .birthday-marker {
+    font-size: 0.68rem;
+  }
+
+  .record-icons {
+    gap: 1px;
+  }
+
+  .record-icons i {
+    font-size: 0.62rem;
+  }
+
+  .record-bars {
+    gap: 2px;
+  }
+
+  .monthly-goal-card {
+    padding: 16px;
+  }
+
+  .monthly-goal-card-header {
+    align-items: flex-start;
+  }
+
+  .monthly-goal-list li {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .monthly-goal-title {
+    min-width: calc(100% - 38px);
+    white-space: normal;
+  }
+
+  .monthly-goal-evaluation {
+    margin-left: 35px;
+  }
+
+  .goal-create-form {
+    padding: 15px;
+  }
+
+  .goal-create-form > div {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .goal-create-form input {
+    grid-column: 1 / -1;
+  }
+
+  .goal-create-form button {
+    min-height: 44px;
+  }
+
+  .goal-list-heading {
+    padding: 17px 16px 14px;
+  }
+
+  .goal-list-item {
+    padding: 14px;
+  }
+
+  .goal-actions {
+    width: 100%;
+    justify-content: space-between;
+    padding-left: 37px;
+  }
+
+  .diary-date-navigation,
+  .goal-month-picker {
+    width: 100%;
+  }
+
+  .diary-date-navigation button,
+  .goal-month-picker button {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .diary-editor textarea {
+    min-height: 42dvh;
+  }
+
+  .daily-page {
+    gap: 14px;
+  }
+
+  .daily-header h2 {
+    font-size: 1.35rem;
+  }
+
+  .date-navigation button,
+  .primary-small-button {
+    min-height: 44px;
+  }
+
+  .meal-section-card,
+  .schedule-section-card {
+    padding: 15px 12px;
+  }
+
+  .meal-list,
+  .schedule-table {
+    overflow-x: visible;
+  }
+
+  .meal-list-head,
+  .meal-row {
+    min-width: 0;
+    grid-template-columns: 58px minmax(0, 1fr) minmax(0, 1fr);
+    gap: 5px;
+  }
+
+  .meal-list-head {
+    padding-inline: 7px;
+  }
+
+  .meal-row {
+    min-height: 60px;
+    padding: 6px;
+  }
+
+  .meal-name {
+    gap: 4px;
+    font-size: 0.76rem;
+  }
+
+  .meal-person-cell {
+    min-width: 0;
+    min-height: 46px;
+    padding: 6px 3px;
+    font-size: 0.75rem;
+  }
+
+  .owner-dot {
+    width: 7px;
+    height: 7px;
+  }
+
+  .empty-action {
+    font-size: 0.7rem;
+  }
+
+  .schedule-table-head,
+  .schedule-row {
+    min-width: 0;
+    grid-template-columns: 44px minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .schedule-table-head > :last-child,
+  .schedule-row > time:last-child {
+    display: none;
+  }
+
+  .schedule-table-head > *,
+  .schedule-row > * {
+    padding: 9px 5px;
+  }
+
+  .schedule-row time {
+    font-size: 0.7rem;
+  }
+
+  .schedule-cell {
+    min-width: 0;
+    min-height: 56px;
+  }
+
+  .schedule-chip {
+    min-height: 42px;
+    padding: 8px;
+    overflow-wrap: anywhere;
+    font-size: 0.74rem;
+  }
+
+  .modal-backdrop {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  .record-modal,
+  .connection-modal {
+    max-height: calc(100dvh - env(safe-area-inset-top));
+    padding-bottom: calc(24px + env(safe-area-inset-bottom));
+  }
+
+  .record-modal h3 {
+    padding-right: 42px;
+    font-size: 1.45rem;
+  }
+
+  .record-modal form {
+    gap: 16px;
+    margin-top: 20px;
+  }
+
+  .form-field input,
+  .form-field textarea,
+  .settings-birthday-form input,
+  .delete-confirm-input {
+    min-height: 46px;
+    font-size: 16px;
+  }
+
+  .meal-type-tabs {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .meal-type-tabs button {
+    min-height: 42px;
+    padding: 8px 5px;
+  }
+
+  .sticker-picker label {
+    min-height: 58px;
+  }
+
+  .meal-delete-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .meal-delete-actions > div {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .settings-birthday-form > div {
+    grid-template-columns: 1fr;
+  }
+
+  .settings-birthday-form button,
+  .settings-account-actions button,
+  .settings-confirm-actions button {
+    min-height: 44px;
+  }
+
+  .settings-account-actions,
+  .settings-confirm-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .settings-account-actions button,
+  .settings-confirm-actions button {
+    width: 100%;
+  }
+
+  .bottom-nav {
+    min-height: calc(66px + env(safe-area-inset-bottom));
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .nav-item {
+    min-height: 60px;
+    font-size: 0.68rem;
+  }
+
+  .nav-icon {
+    font-size: 1.28rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .dashboard-main {
+    padding-inline: 10px;
+  }
+
+  .meal-section-card,
+  .schedule-section-card {
+    padding-inline: 8px;
+  }
+
+  .meal-list-head,
+  .meal-row {
+    grid-template-columns: 52px minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .meal-name,
+  .meal-person-cell {
+    font-size: 0.68rem;
+  }
+
+  .calendar-day {
+    min-height: 49px;
+  }
 }

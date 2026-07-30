@@ -54,6 +54,14 @@ export async function deleteMyAccount(confirmation) {
   const { data, error } = await supabase.rpc('delete_my_account', {
     confirmation_text: confirmation,
   })
-  if (error) throw error
+  if (error) {
+    if (error.message?.includes('delete_my_account')) {
+      throw new Error('회원 탈퇴용 데이터베이스 설정이 적용되지 않았습니다.')
+    }
+    throw error
+  }
+  if (data !== true) {
+    throw new Error('회원 탈퇴가 완료되지 않았습니다. 잠시 후 다시 시도해 주세요.')
+  }
   return data
 }
