@@ -446,19 +446,23 @@ function App() {
               />
             ) : connection?.partner_id && activeView === 'home' ? (
               <>
-                <section className="welcome-section">
-                  <p className="today-label">오늘도 반가워요</p>
-                  <h1>{displayName}님과 {connection.partner_nickname || '파트너'}님의 하루</h1>
-                  <p>홈에서 목표와 캘린더를 함께 확인하고 날짜별 기록으로 이동할 수 있어요.</p>
-                </section>
+                {!isDailyDetail ? (
+                  <>
+                    <section className="welcome-section">
+                      <p className="today-label">오늘도 반가워요</p>
+                      <h1>{displayName}님과 {connection.partner_nickname || '파트너'}님의 하루</h1>
+                      <p>홈에서 목표와 캘린더를 함께 확인하고 날짜별 기록으로 이동할 수 있어요.</p>
+                    </section>
 
-                <AnniversarySummary coupleId={connection.couple_id} />
-                <BirthdaySummary
-                  displayName={displayName}
-                  partnerName={connection.partner_nickname || '파트너'}
-                  birthday={birthday}
-                  partnerBirthday={connection.partner_birthday}
-                />
+                    <AnniversarySummary coupleId={connection.couple_id} />
+                    <BirthdaySummary
+                      displayName={displayName}
+                      partnerName={connection.partner_nickname || '파트너'}
+                      birthday={birthday}
+                      partnerBirthday={connection.partner_birthday}
+                    />
+                  </>
+                ) : null}
 
                 <CalendarView
                   displayName={displayName}

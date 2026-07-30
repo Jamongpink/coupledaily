@@ -10,7 +10,7 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: [
         'favicon.svg',
-        'pwa/apple-touch-icon.png',
+        'pwa/coupledaily-heart-apple.png',
       ],
       manifest: {
         name: 'CoupleDaily - 우리의 하루',
@@ -26,19 +26,19 @@ export default defineConfig({
         categories: ['lifestyle', 'productivity'],
         icons: [
           {
-            src: '/pwa/pwa-192x192.png',
+            src: '/pwa/coupledaily-heart-192.png',
             sizes: '192x192',
             type: 'image/png',
             purpose: 'any',
           },
           {
-            src: '/pwa/pwa-512x512.png',
+            src: '/pwa/coupledaily-heart-512.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'any',
           },
           {
-            src: '/pwa/pwa-512x512.png',
+            src: '/pwa/coupledaily-heart-512.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'maskable',
