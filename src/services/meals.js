@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase'
+import { notifyPartner } from './pushNotifications'
 
 const BUCKET = 'meal-photos'
 
@@ -140,6 +141,9 @@ export async function saveMeal({
       )
     if (photoRowsError) throw photoRowsError
   }
+
+  const mealLabels = { breakfast: '아침', lunch: '점심', dinner: '저녁', snack: '간식', late_night: '야식' }
+  notifyPartner('meals', '새 식단 기록', `파트너가 ${mealLabels[mealType] || '식단'}을 기록했어요.`)
 
   return meal.id
 }

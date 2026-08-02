@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase'
+import { notifyPartner } from './pushNotifications'
 
 const diaryFields = 'id, couple_id, user_id, diary_date, content, created_at, updated_at'
 
@@ -36,6 +37,7 @@ export async function saveDiary({ coupleId, date, content }) {
     .single()
 
   if (error) throw error
+  notifyPartner('diaries', '새 일기', '파트너가 오늘의 일기를 남겼어요.')
   return data
 }
 

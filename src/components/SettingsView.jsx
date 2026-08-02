@@ -1,17 +1,22 @@
 import { useEffect, useState } from 'react'
 import PartnerConnection from './PartnerConnection'
+import {
+  defaultPushPreferences,
+  disablePushNotifications,
+  enablePushNotifications,
+  getPushSettings,
+  savePushPreferences,
+} from '../services/pushNotifications'
 
 const notificationSections = [
-  ['meals', '식단', '🍚', '식사 기록 시간을 알려드려요.'],
-  ['schedules', '일정', '📅', '등록한 일정이 다가오면 알려드려요.'],
-  ['goals', '목표', '🎯', '이번 달 목표 확인과 평가를 알려드려요.'],
-  ['diaries', '일기', '📓', '오늘의 일기 작성을 알려드려요.'],
-  ['anniversaries', '기념일', '♥', '생일과 기념일이 다가오면 알려드려요.'],
+  ['meals', '식단', '🍚', '상대방이 식단을 등록하거나 수정하면 알려드려요.'],
+  ['schedules', '일정', '📅', '상대방이 일정을 등록하거나 수정하면 알려드려요.'],
+  ['goals', '목표', '🎯', '상대방이 새로운 목표를 등록하면 알려드려요.'],
+  ['diaries', '일기', '📓', '상대방이 일기를 등록하거나 수정하면 알려드려요.'],
+  ['anniversaries', '기념일', '♥', '상대방이 기념일을 등록하거나 수정하면 알려드려요.'],
 ]
 
-const defaultNotificationSections = Object.fromEntries(
-  notificationSections.map(([key]) => [key, true]),
-)
+const defaultNotificationSections = defaultPushPreferences
 
 function SettingsView({
   userId,
@@ -40,28 +45,23 @@ function SettingsView({
   const [notificationMessage, setNotificationMessage] = useState('')
   const [sectionNotifications, setSectionNotifications] = useState(defaultNotificationSections)
   const deleteConfirmationMatches = deleteText.trim() === '탈퇴'
-  const notificationStorageKey = `coupledaily:notifications:${userId}`
-  const notificationSectionsStorageKey = `${notificationStorageKey}:sections`
-
   useEffect(() => {
-    const savedPreference = window.localStorage.getItem(notificationStorageKey) === 'enabled'
-    const permissionAllowsNotifications =
-      typeof Notification !== 'undefined' && Notification.permission === 'granted'
+    let active = true
 
-    setNotificationsEnabled(savedPreference && permissionAllowsNotifications)
-
-    try {
-      const savedSections = JSON.parse(
-        window.localStorage.getItem(notificationSectionsStorageKey) || '{}',
-      )
-      setSectionNotifications({
-        ...defaultNotificationSections,
-        ...savedSections,
+    getPushSettings(userId)
+      .then(({ enabled, preferences }) => {
+        if (!active) return
+        setNotificationsEnabled(enabled)
+        setSectionNotifications(preferences)
       })
-    } catch {
-      setSectionNotifications(defaultNotificationSections)
-    }
-  }, [notificationSectionsStorageKey, notificationStorageKey])
+      .catch(() => {
+        if (!active) return
+        setNotificationsEnabled(false)
+        setNotificationMessage('알림 설정을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.')
+      })
+
+    return () => { active = false }
+  }, [userId])
 
   const openDangerDialog = (mode) => {
     setError('')
@@ -82,33 +82,15 @@ function SettingsView({
 
     try {
       if (notificationsEnabled) {
-        window.localStorage.setItem(notificationStorageKey, 'disabled')
+        await disablePushNotifications()
         setNotificationsEnabled(false)
         setNotificationMessage('이 기기에서 CoupleDaily 알림을 껐습니다.')
         return
       }
 
-      if (typeof Notification === 'undefined') {
-        throw new Error('이 브라우저에서는 알림 기능을 지원하지 않습니다.')
-      }
-
-      const permission =
-        Notification.permission === 'granted'
-          ? 'granted'
-          : await Notification.requestPermission()
-
-      if (permission !== 'granted') {
-        window.localStorage.setItem(notificationStorageKey, 'disabled')
-        throw new Error(
-          permission === 'denied'
-            ? '브라우저에서 알림이 차단되어 있습니다. 기기 설정에서 CoupleDaily 알림을 허용해 주세요.'
-            : '알림 권한이 허용되지 않았습니다.',
-        )
-      }
-
-      window.localStorage.setItem(notificationStorageKey, 'enabled')
+      await enablePushNotifications(userId, sectionNotifications)
       setNotificationsEnabled(true)
-      setNotificationMessage('이 기기에서 CoupleDaily 알림을 켰습니다.')
+      setNotificationMessage('이 기기에서 상대방의 새 기록 알림을 받을 수 있습니다.')
     } catch (nextError) {
       setNotificationsEnabled(false)
       setNotificationMessage(nextError.message || '알림 설정을 변경하지 못했습니다.')
@@ -117,17 +99,22 @@ function SettingsView({
     }
   }
 
-  const toggleNotificationSection = (section) => {
+  const toggleNotificationSection = async (section) => {
     if (!notificationsEnabled) return
 
-    setSectionNotifications((current) => {
-      const next = {
-        ...current,
-        [section]: !current[section],
-      }
-      window.localStorage.setItem(notificationSectionsStorageKey, JSON.stringify(next))
-      return next
-    })
+    const previous = sectionNotifications
+    const next = { ...previous, [section]: !previous[section] }
+    setSectionNotifications(next)
+    setNotificationBusy(true)
+    setNotificationMessage('')
+    try {
+      await savePushPreferences(next)
+    } catch (nextError) {
+      setSectionNotifications(previous)
+      setNotificationMessage(nextError.message || '세부 알림 설정을 변경하지 못했습니다.')
+    } finally {
+      setNotificationBusy(false)
+    }
   }
 
   const saveBirthday = async (event) => {
@@ -232,7 +219,7 @@ function SettingsView({
         <div className="notification-setting-row">
           <div>
             <strong>CoupleDaily 알림</strong>
-            <p>이 기기에서 일정과 기념일 알림을 받을 수 있도록 설정합니다.</p>
+            <p>상대방이 새 기록을 남기면 이 기기로 알려드려요.</p>
           </div>
           <button
             className={`notification-switch ${notificationsEnabled ? 'is-on' : ''}`}
@@ -274,7 +261,7 @@ function SettingsView({
             </div>
           ))}
         </div>
-        <small className="notification-note">알림 허용 상태는 현재 사용하는 기기에만 저장됩니다.</small>
+        <small className="notification-note">알림은 상대방이 기록을 등록하거나 수정할 때 발송되며, 기기마다 한 번씩 켜야 합니다.</small>
       </article>
 
       <article className="settings-card account-settings">

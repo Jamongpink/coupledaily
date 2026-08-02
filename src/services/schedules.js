@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase'
+import { notifyPartner } from './pushNotifications'
 
 function localDateTime(date, time) {
   return new Date(`${date}T${time}:00`).toISOString()
@@ -75,6 +76,7 @@ export async function saveSchedule({
 
   const { data, error } = await query.select('id').single()
   if (error) throw error
+  notifyPartner('schedules', '새 일정', `파트너가 “${title.trim()}” 일정을 ${id ? '수정' : '등록'}했어요.`)
   return data.id
 }
 

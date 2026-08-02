@@ -375,6 +375,16 @@ h1 {
   letter-spacing: -0.025em;
 }
 
+.dashboard-card .card-heading > div {
+  min-width: 0;
+}
+
+.dashboard-card h2 {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .partner-copy > p:last-child,
 .empty-description {
   color: var(--muted);
@@ -698,6 +708,13 @@ h1 {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+}
+
+.monthly-goal-card-header .goal-owner {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .quick-goal-toggle {
@@ -2176,7 +2193,7 @@ h1 {
 .home-summary-strip article { display: flex; align-items: center; gap: 13px; border: 1px solid #eadfd5; border-radius: 18px; background: linear-gradient(135deg,#fff9f2,#fffefa); padding: 16px 18px; box-shadow: 0 8px 24px rgba(66,54,43,.05); }
 .home-summary-strip article > span { display: grid; place-items: center; width: 42px; height: 42px; flex: 0 0 auto; border-radius: 50%; background: #f9ddd3; color: #b86e60; font-size: 1.3rem; }
 .home-summary-strip article div { display: grid; gap: 2px; margin-right: auto; }
-.home-summary-strip article small { color: var(--muted); font-weight: 750; }
+.home-summary-strip article small { overflow: hidden; color: var(--muted); font-weight: 750; text-overflow: ellipsis; white-space: nowrap; }
 .home-summary-strip article strong { font-size: .95rem; }
 .home-summary-strip button { border: 0; border-radius: 10px; background: #f1e7dc; color: #7d6156; padding: 9px 12px; font-weight: 800; cursor: pointer; }
 .daily-header, .section-title-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; }

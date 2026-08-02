@@ -24,14 +24,6 @@ const mealTypes = [
   ['lateNight', '야식', '🌜'],
 ]
 
-const defaultMealTimes = {
-  breakfast: '08:00',
-  lunch: '11:30',
-  dinner: '18:30',
-  snack: '16:00',
-  lateNight: '22:00',
-}
-
 const stickers = [
   ['운동', '🏋️'], ['공부', '🎓'], ['회의', '📖'], ['업무', '💼'],
   ['출장', '🧳'], ['약속', '🗓️'], ['데이트', '💗'], ['병원', '🏥'],
@@ -68,6 +60,26 @@ const inputDate = (date) => {
   const month = String(date.getMonth() + 1).padStart(2, '0')
   const day = String(date.getDate()).padStart(2, '0')
   return `${year}-${month}-${day}`
+}
+
+const inputTime = (date) =>
+  `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`
+
+const roundDateTimeToHalfHour = (date, time) => {
+  const [hours, minutes] = time.split(':').map(Number)
+  const rounded = new Date(`${date}T00:00:00`)
+  rounded.setMinutes((hours * 60) + (Math.round(minutes / 30) * 30))
+
+  return {
+    date: inputDate(rounded),
+    time: inputTime(rounded),
+    value: rounded,
+  }
+}
+
+const getRoundedCurrentTime = () => {
+  const now = new Date()
+  return roundDateTimeToHalfHour(inputDate(now), inputTime(now)).time
 }
 
 function CalendarView({
@@ -456,11 +468,16 @@ function CalendarView({
     setMealError('')
 
     try {
+      const roundedMealTime = roundDateTimeToHalfHour(
+        inputDate(selectedDate),
+        data.get('mealTime'),
+      )
+
       await saveMealRecord({
         coupleId,
         date: inputDate(selectedDate),
         mealType,
-        time: data.get('mealTime'),
+        time: roundedMealTime.time,
         memo: data.get('mealMemo'),
         photos: draftPhotos,
       })
@@ -568,15 +585,33 @@ function CalendarView({
     setScheduleError('')
 
     try {
+      const roundedStart = roundDateTimeToHalfHour(
+        data.get('startDate'),
+        data.get('startTime'),
+      )
+      let roundedEnd = roundDateTimeToHalfHour(
+        data.get('endDate'),
+        data.get('endTime'),
+      )
+
+      if (roundedEnd.value <= roundedStart.value) {
+        const adjustedEnd = new Date(roundedStart.value.getTime() + (30 * 60 * 1000))
+        roundedEnd = {
+          date: inputDate(adjustedEnd),
+          time: inputTime(adjustedEnd),
+          value: adjustedEnd,
+        }
+      }
+
       await saveScheduleRecord({
         id: selectedSchedule?.id,
         coupleId,
         title: data.get('title'),
         sticker: data.get('sticker'),
-        startDate: data.get('startDate'),
-        startTime: data.get('startTime'),
-        endDate: data.get('endDate'),
-        endTime: data.get('endTime'),
+        startDate: roundedStart.date,
+        startTime: roundedStart.time,
+        endDate: roundedEnd.date,
+        endTime: roundedEnd.time,
         memo: data.get('memo'),
       })
       await loadSchedules()
@@ -614,6 +649,19 @@ function CalendarView({
     setDeleteConfirm(false)
     setScheduleError('')
     setModal('schedule')
+  }
+
+  const defaultRoundedTime = getRoundedCurrentTime()
+  const defaultScheduleStart = roundDateTimeToHalfHour(
+    inputDate(selectedDate),
+    defaultRoundedTime,
+  )
+  const defaultScheduleEndValue = new Date(
+    defaultScheduleStart.value.getTime() + (30 * 60 * 1000),
+  )
+  const defaultScheduleEnd = {
+    date: inputDate(defaultScheduleEndValue),
+    time: inputTime(defaultScheduleEndValue),
   }
 
   if (screen === 'month') {
@@ -1025,7 +1073,8 @@ function CalendarView({
                   key={mealType}
                   name="mealTime"
                   type="time"
-                  defaultValue={meals[mealType]?.mine?.time || defaultMealTimes[mealType]}
+                  step="1800"
+                  defaultValue={meals[mealType]?.mine?.time || defaultRoundedTime}
                   required
                 />
               </label>
@@ -1134,10 +1183,10 @@ function CalendarView({
                 </div>
               </fieldset>
               <div className="date-time-grid">
-                <label className="form-field"><span>시작 날짜</span><input name="startDate" type="date" defaultValue={selectedSchedule?.startDate || inputDate(selectedDate)} required /></label>
-                <label className="form-field"><span>시작 시간</span><input name="startTime" type="time" defaultValue={selectedSchedule?.startTime || '13:00'} required /></label>
-                <label className="form-field"><span>종료 날짜</span><input name="endDate" type="date" defaultValue={selectedSchedule?.endDate || inputDate(selectedDate)} required /></label>
-                <label className="form-field"><span>종료 시간</span><input name="endTime" type="time" defaultValue={selectedSchedule?.endTime || '14:00'} required /></label>
+                <label className="form-field"><span>시작 날짜</span><input name="startDate" type="date" defaultValue={selectedSchedule?.startDate || defaultScheduleStart.date} required /></label>
+                <label className="form-field"><span>시작 시간</span><input name="startTime" type="time" step="1800" defaultValue={selectedSchedule?.startTime || defaultScheduleStart.time} required /></label>
+                <label className="form-field"><span>종료 날짜</span><input name="endDate" type="date" defaultValue={selectedSchedule?.endDate || defaultScheduleEnd.date} required /></label>
+                <label className="form-field"><span>종료 시간</span><input name="endTime" type="time" step="1800" defaultValue={selectedSchedule?.endTime || defaultScheduleEnd.time} required /></label>
               </div>
               <label className="form-field"><span>메모</span><textarea name="memo" defaultValue={selectedSchedule?.memo || ''} placeholder="일정 내용을 적어주세요." /></label>
               {scheduleError ? <p className="meal-status error">{scheduleError}</p> : null}

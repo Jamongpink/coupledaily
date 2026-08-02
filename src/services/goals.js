@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase'
+import { notifyPartner } from './pushNotifications'
 
 export async function getGoalsForMonth(coupleId, month) {
   const { data, error } = await supabase
@@ -31,6 +32,7 @@ export async function createGoal({ coupleId, month, title }) {
     .single()
 
   if (error) throw error
+  notifyPartner('goals', '새 목표', `파트너가 “${title.trim()}” 목표를 등록했어요.`)
   return data
 }
 
