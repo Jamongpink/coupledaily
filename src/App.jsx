@@ -30,6 +30,7 @@ function App() {
   const [isDailyDetail, setIsDailyDetail] = useState(false)
   const [homeResetKey, setHomeResetKey] = useState(0)
   const [goalRefreshKey, setGoalRefreshKey] = useState(0)
+  const [openDiaryEditor, setOpenDiaryEditor] = useState(false)
   const [birthday, setBirthday] = useState(null)
   const [birthdayLoading, setBirthdayLoading] = useState(true)
   const [birthdaySaving, setBirthdaySaving] = useState(false)
@@ -187,6 +188,7 @@ function App() {
     const handlePopState = (event) => {
       if (!event.state?.coupleDaily) return
       const nextView = event.state.view || 'home'
+      setOpenDiaryEditor(false)
       setActiveView(nextView)
       setIsDailyDetail(Boolean(event.state.daily))
       if (nextView === 'home' && !event.state.daily) {
@@ -474,6 +476,16 @@ function App() {
                   homeResetKey={homeResetKey}
                   goalRefreshKey={goalRefreshKey}
                   onDetailChange={setIsDailyDetail}
+                  onOpenDiaryEditor={() => {
+                    window.history.pushState(
+                      { coupleDaily: true, view: 'diary', daily: false },
+                      '',
+                      window.location.href,
+                    )
+                    setOpenDiaryEditor(true)
+                    setActiveView('diary')
+                    setIsDailyDetail(false)
+                  }}
                 />
               </>
             ) : connection?.partner_id && activeView === 'diary' ? (
@@ -482,6 +494,8 @@ function App() {
                 partnerName={connection.partner_nickname || '파트너'}
                 coupleId={connection.couple_id}
                 userId={user.id}
+                openEditorOnMount={openDiaryEditor}
+                onEditorOpened={() => setOpenDiaryEditor(false)}
               />
             ) : connection?.partner_id && activeView === 'goal' ? (
               <GoalView
@@ -554,6 +568,7 @@ function App() {
                     : undefined
                 }
                 onClick={() => {
+                  setOpenDiaryEditor(false)
                   const isSameScreen =
                     activeView === view && !(view === 'home' && isDailyDetail)
                   if (!isSameScreen) {

@@ -14,7 +14,7 @@ import {
 import { createGoal, getGoalsForMonth, updateGoalStatus } from '../services/goals'
 import { getAnniversaries } from '../services/anniversaries'
 import { compressImage } from '../lib/imageCompression'
-import { getDiariesForDate } from '../services/diaries'
+import { getDiariesForDate, getDiaryDatesForMonth } from '../services/diaries'
 
 const mealTypes = [
   ['breakfast', '아침', '☀️'],
@@ -92,6 +92,7 @@ function CalendarView({
   homeResetKey,
   goalRefreshKey,
   onDetailChange,
+  onOpenDiaryEditor,
 }) {
   const today = useMemo(() => new Date(), [])
   const [month, setMonth] = useState(new Date(today.getFullYear(), today.getMonth(), 1))
@@ -197,13 +198,22 @@ function CalendarView({
     Promise.all([
       getMealDatesForMonth(coupleId, monthStart, monthEnd),
       getSchedulesForMonth(coupleId, monthStart, monthEnd),
+      getDiaryDatesForMonth(coupleId, monthStart, monthEnd),
     ])
-      .then(([mealRows, scheduleRows]) => {
+      .then(([mealRows, scheduleRows, diaryRows]) => {
         if (!active) return
         const records = {}
-        mealRows.forEach(({ meal_date: mealDate }) => {
+        const addOwnerRecord = (day, type, recordUserId) => {
+          const owner = recordUserId === userId ? 'mine' : 'partner'
+          records[day] = {
+            ...(records[day] || {}),
+            [type]: { ...(records[day]?.[type] || {}), [owner]: true },
+          }
+        }
+
+        mealRows.forEach(({ meal_date: mealDate, user_id: recordUserId }) => {
           const day = Number(mealDate.slice(-2))
-          records[day] = { ...(records[day] || {}), meals: true }
+          addOwnerRecord(day, 'meals', recordUserId)
         })
 
         const monthStartDate = new Date(`${monthStart}T00:00:00`)
@@ -214,9 +224,12 @@ function CalendarView({
           const scheduleEnd = new Date(Math.min(new Date(schedule.end_at).getTime() - 1, monthEndDate.getTime() - 1))
           while (cursor <= scheduleEnd) {
             const day = cursor.getDate()
-            records[day] = { ...(records[day] || {}), schedules: true }
+            addOwnerRecord(day, 'schedules', schedule.user_id)
             cursor.setDate(cursor.getDate() + 1)
           }
+        })
+        diaryRows.forEach(({ diary_date: diaryDate, user_id: recordUserId }) => {
+          addOwnerRecord(Number(diaryDate.slice(-2)), 'diaries', recordUserId)
         })
         setMonthlyRecords(records)
       })
@@ -227,7 +240,13 @@ function CalendarView({
     return () => {
       active = false
     }
-  }, [coupleId, month, monthRecordRefresh])
+  }, [coupleId, month, monthRecordRefresh, userId])
+
+  useEffect(() => {
+    const refreshMonthRecords = () => setMonthRecordRefresh((current) => current + 1)
+    window.addEventListener('coupledaily:diaries-changed', refreshMonthRecords)
+    return () => window.removeEventListener('coupledaily:diaries-changed', refreshMonthRecords)
+  }, [])
 
   useEffect(() => {
     let active = true
@@ -671,7 +690,7 @@ function CalendarView({
           <div>
             <span className="eyebrow">OUR MONTH</span>
             <h2>{displayName}님과 {partnerName}님의 캘린더</h2>
-            <p>날짜를 선택하면 그날의 식단과 두 사람의 일정을 볼 수 있어요.</p>
+            <p>날짜별 기록을 확인해요.</p>
           </div>
         </header>
 
@@ -820,14 +839,19 @@ function CalendarView({
 
                   {record ? (
                     <span className="calendar-records" aria-label="등록된 기록">
-                      <span className="record-icons">
-                        {record.meals ? <i title="식단">🍚</i> : null}
-                        {record.schedules ? <i title="일정">📅</i> : null}
-                      </span>
-                      <span className="record-bars">
-                        {record.meals ? <i className="meal-bar" /> : null}
-                        {record.schedules ? <i className="schedule-bar" /> : null}
-                      </span>
+                      {[
+                        ['meals', '식단', '🍚'],
+                        ['schedules', '일정', '📅'],
+                        ['diaries', '일기', '📓'],
+                      ].map(([type, label, icon]) => record[type] ? (
+                        <span className={`record-type ${type}`} title={`${label}: 왼쪽 나, 오른쪽 상대방`} key={type}>
+                          <i aria-hidden="true">{icon}</i>
+                          <span className="record-halves" aria-label={`${label}, 나 ${record[type].mine ? '기록함' : '미기록'}, 상대방 ${record[type].partner ? '기록함' : '미기록'}`}>
+                            <b className={record[type].mine ? 'is-filled' : ''} />
+                            <b className={record[type].partner ? 'is-filled' : ''} />
+                          </span>
+                        </span>
+                      ) : null)}
                     </span>
                   ) : null}
                 </button>
@@ -850,7 +874,19 @@ function CalendarView({
           </div>
 
           <div className="diary-grid">
-            <article className="diary-card mine">
+            <article
+              className="diary-card mine home-diary-link"
+              role="button"
+              tabIndex={0}
+              aria-label={myTodayDiary ? '오늘의 일기 수정하기' : '오늘의 일기 작성하기'}
+              onClick={onOpenDiaryEditor}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault()
+                  onOpenDiaryEditor?.()
+                }
+              }}
+            >
               <header>
                 <span className="diary-avatar" aria-hidden="true">
                   {displayName.slice(0, 1)}

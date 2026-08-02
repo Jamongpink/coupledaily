@@ -654,7 +654,8 @@ h1 {
   margin-bottom: 22px;
 }
 
-.calendar-intro h1 {
+.calendar-intro h1,
+.calendar-intro h2 {
   margin: 7px 0 8px;
   font-size: clamp(1.75rem, 4vw, 2.4rem);
 }
@@ -1337,8 +1338,9 @@ h1 {
   position: relative;
   min-height: 96px;
   display: flex;
-  align-items: flex-start;
-  justify-content: flex-end;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
   border: 0;
   border-right: 1px solid #ece8df;
   border-bottom: 1px solid #ece8df;
@@ -1643,6 +1645,21 @@ h1 {
   border-radius: 22px;
   background: #fffefa;
   box-shadow: 0 8px 24px rgba(42, 48, 41, 0.045);
+}
+
+.home-diary-link {
+  cursor: pointer;
+  transition: transform 160ms ease, box-shadow 160ms ease;
+}
+
+.home-diary-link:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 18px 42px rgba(78,104,98,.14);
+}
+
+.home-diary-link:focus-visible {
+  outline: 3px solid rgba(79,159,139,.35);
+  outline-offset: 3px;
 }
 
 .diary-card > header {
@@ -2756,32 +2773,45 @@ h1 {
   line-height: 1.4;
 }
 .calendar-records {
-  display: grid;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-start;
   gap: 5px;
   width: 100%;
   margin-top: 7px;
+  white-space: nowrap;
+  overflow: visible;
 }
-.record-icons, .record-bars {
-  display: flex;
+.record-type {
+  --record-color: #e4a48f;
+  display: inline-flex;
+  flex: 0 0 auto;
+  flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
 }
-.record-icons i {
+.record-type.schedules { --record-color: #63ac9e; }
+.record-type.diaries { --record-color: #9b8cc4; }
+.record-type > i {
   font-style: normal;
-  font-size: .86rem;
+  font-size: .78rem;
   line-height: 1;
 }
-.record-bars i {
-  height: 4px;
-  border-radius: 99px;
+.record-halves {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  width: 20px;
+  height: 5px;
 }
-.record-bars .meal-bar {
-  width: 24px;
-  background: #e4a48f;
+.record-halves b {
+  min-width: 0;
+  border: 1px solid var(--record-color);
+  background: transparent;
 }
-.record-bars .schedule-bar {
-  width: 34px;
-  background: #63ac9e;
+.record-halves b:first-child { border-radius: 99px 0 0 99px; }
+.record-halves b:last-child { border-left: 0; border-radius: 0 99px 99px 0; }
+.record-halves b.is-filled {
+  background: var(--record-color);
 }
 .record-modal { position: relative; width: min(640px,100%); max-height: calc(100vh - 48px); overflow-y: auto; border-radius: 24px; background: #fffdf8; box-shadow: 0 24px 70px rgba(34,54,50,.25); padding: 28px; }
 .record-modal h3 { margin: 5px 0 0; font-size: 1.75rem; }
@@ -2865,10 +2895,9 @@ h1 {
   .schedule-form-actions .modal-submit { width: 100%; }
   .meal-photo-preview-list, .meal-photo-gallery { grid-template-columns: repeat(3,minmax(0,1fr)); }
   .calendar-day-number small { width: 6px; height: 6px; overflow: hidden; padding: 0; color: transparent; }
-  .record-icons i { font-size: .7rem; }
-  .record-bars i { height: 3px; }
-  .record-bars .meal-bar { width: 14px; }
-  .record-bars .schedule-bar { width: 18px; }
+  .calendar-records { gap: 3px; }
+  .record-type > i { font-size: .68rem; }
+  .record-halves { width: 15px; height: 4px; }
 }
 
 /* Mobile-first polish before PWA packaging */
@@ -2906,11 +2935,21 @@ h1 {
 
   .welcome-section h1,
   .calendar-intro h1,
+  .calendar-intro h2,
   .goals-page-header h1,
   .settings-header h1,
   .diary-page-header h1 {
     font-size: 1.65rem;
     line-height: 1.25;
+  }
+
+  .calendar-intro h2,
+  .calendar-intro > div > p:last-child {
+    white-space: nowrap;
+  }
+
+  .calendar-intro h2 {
+    font-size: clamp(1.25rem, 6vw, 1.65rem);
   }
 
   .partner-card {
@@ -2983,17 +3022,15 @@ h1 {
     font-size: 0.68rem;
   }
 
-  .record-icons {
-    gap: 1px;
-  }
-
-  .record-icons i {
-    font-size: 0.62rem;
-  }
-
-  .record-bars {
+  .calendar-records {
+    justify-content: center;
     gap: 2px;
+    margin-top: 5px;
   }
+
+  .record-type { gap: 2px; }
+  .record-type > i { font-size: 0.58rem; }
+  .record-halves { width: 11px; height: 4px; }
 
   .monthly-goal-card {
     padding: 16px;

@@ -16,7 +16,14 @@ const toDateKey = (date) => {
   return `${year}-${month}-${day}`
 }
 
-function DiaryView({ displayName, partnerName, coupleId, userId }) {
+function DiaryView({
+  displayName,
+  partnerName,
+  coupleId,
+  userId,
+  openEditorOnMount = false,
+  onEditorOpened,
+}) {
   const [selectedDate, setSelectedDate] = useState(() => new Date())
   const [diaries, setDiaries] = useState([])
   const [isEditing, setIsEditing] = useState(false)
@@ -63,6 +70,14 @@ function DiaryView({ displayName, partnerName, coupleId, userId }) {
     setError('')
     setIsEditing(true)
   }
+
+  useEffect(() => {
+    if (!openEditorOnMount || loading) return
+    setContent(myDiary?.content || '')
+    setError('')
+    setIsEditing(true)
+    onEditorOpened?.()
+  }, [loading, myDiary?.content, onEditorOpened, openEditorOnMount])
 
   const handleSave = async (event) => {
     event.preventDefault()

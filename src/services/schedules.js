@@ -27,7 +27,7 @@ export async function getSchedulesForMonth(coupleId, monthStart, monthEnd) {
   const end = new Date(`${monthEnd}T00:00:00`).toISOString()
   const { data, error } = await supabase
     .from('schedules')
-    .select('start_at, end_at')
+    .select('start_at, end_at, user_id')
     .eq('couple_id', coupleId)
     .lt('start_at', end)
     .gt('end_at', start)

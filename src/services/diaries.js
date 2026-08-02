@@ -14,6 +14,18 @@ export async function getDiariesForDate(coupleId, date) {
   return data || []
 }
 
+export async function getDiaryDatesForMonth(coupleId, monthStart, monthEnd) {
+  const { data, error } = await supabase
+    .from('diaries')
+    .select('diary_date, user_id')
+    .eq('couple_id', coupleId)
+    .gte('diary_date', monthStart)
+    .lt('diary_date', monthEnd)
+
+  if (error) throw error
+  return data || []
+}
+
 export async function saveDiary({ coupleId, date, content }) {
   const { data: authData, error: authError } = await supabase.auth.getUser()
   if (authError) throw authError

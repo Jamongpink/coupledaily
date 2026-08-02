@@ -45,7 +45,7 @@ export async function getMealsForDate(coupleId, date) {
 export async function getMealDatesForMonth(coupleId, monthStart, monthEnd) {
   const { data, error } = await supabase
     .from('meals')
-    .select('meal_date')
+    .select('meal_date, user_id')
     .eq('couple_id', coupleId)
     .gte('meal_date', monthStart)
     .lt('meal_date', monthEnd)
