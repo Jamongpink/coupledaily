@@ -1,0 +1,4 @@
+project_id = "bqswnlvddquhzmlpwmks"
+
+[functions.send-date-reminders]
+verify_jwt = false

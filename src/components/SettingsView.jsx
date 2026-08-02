@@ -13,7 +13,7 @@ const notificationSections = [
   ['schedules', '일정', '📅', '상대방이 일정을 등록하거나 수정하면 알려드려요.'],
   ['goals', '목표', '🎯', '상대방이 새로운 목표를 등록하면 알려드려요.'],
   ['diaries', '일기', '📓', '상대방이 일기를 등록하거나 수정하면 알려드려요.'],
-  ['anniversaries', '기념일', '♥', '상대방이 기념일을 등록하거나 수정하면 알려드려요.'],
+  ['anniversaries', '기념일·생일', '♥', '저장된 기념일과 두 사람의 생일 당일에 알려드려요.'],
 ]
 
 const defaultNotificationSections = defaultPushPreferences
