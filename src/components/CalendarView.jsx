@@ -108,6 +108,7 @@ function CalendarView({
   const [mealError, setMealError] = useState('')
   const [photoOptimizing, setPhotoOptimizing] = useState(false)
   const [mealDeleteConfirm, setMealDeleteConfirm] = useState(false)
+  const [mealCloseConfirm, setMealCloseConfirm] = useState(false)
   const mealFormRef = useRef(null)
   const scheduleFormRef = useRef(null)
   const [meals, setMeals] = useState(initialMeals)
@@ -640,6 +641,22 @@ function CalendarView({
 
   const saveAndCloseMeal = () => {
     if (mealSaving || photoOptimizing) return
+    setMealCloseConfirm(true)
+  }
+
+  const discardAndCloseMeal = () => {
+    draftPhotos.forEach((photo) => {
+      if (photo.file && photo.url?.startsWith('blob:')) URL.revokeObjectURL(photo.url)
+    })
+    setDraftPhotos([])
+    setMealError('')
+    setMealDeleteConfirm(false)
+    setMealCloseConfirm(false)
+    setModal(null)
+  }
+
+  const confirmAndSaveMeal = () => {
+    setMealCloseConfirm(false)
     mealFormRef.current?.requestSubmit()
   }
 
@@ -1166,7 +1183,7 @@ function CalendarView({
               type="button"
               onClick={saveAndCloseMeal}
               disabled={mealSaving}
-              aria-label="저장하고 닫기"
+              aria-label="식단 창 닫기"
             >
               ×
             </button>
@@ -1205,11 +1222,30 @@ function CalendarView({
                     </figure>
                   ))}
                   {draftPhotos.length < 3 ? (
-                    <label className="meal-photo-upload">
-                      <input type="file" accept="image/*" multiple disabled={photoOptimizing} onChange={selectMealPhotos} />
-                      <span>＋</span>
-                      <strong>{photoOptimizing ? '최적화 중' : '사진 추가'}</strong>
-                    </label>
+                    <>
+                      <label className="meal-photo-upload camera">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          capture="environment"
+                          disabled={photoOptimizing}
+                          onChange={selectMealPhotos}
+                        />
+                        <span aria-hidden="true">📷</span>
+                        <strong>{photoOptimizing ? '최적화 중' : '카메라로 촬영'}</strong>
+                      </label>
+                      <label className="meal-photo-upload album">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          multiple
+                          disabled={photoOptimizing}
+                          onChange={selectMealPhotos}
+                        />
+                        <span aria-hidden="true">▧</span>
+                        <strong>{photoOptimizing ? '최적화 중' : '앨범에서 선택'}</strong>
+                      </label>
+                    </>
                   ) : null}
                 </div>
                 <small>최대 3장까지 선택할 수 있으며, 긴 변 1280px·약 50% 화질로 자동 최적화됩니다.</small>
@@ -1237,10 +1273,22 @@ function CalendarView({
                   )}
                 </div>
               ) : null}
-              <p className={`meal-auto-save-note ${mealSaving ? 'saving' : ''}`}>
-                {mealSaving ? '식단을 저장하고 있어요...' : '창을 닫으면 입력한 내용이 자동으로 저장됩니다.'}
-              </p>
             </form>
+          </section>
+        </div>
+      )}
+
+      {modal === 'meal' && mealCloseConfirm && (
+        <div className="modal-backdrop meal-close-confirm-backdrop">
+          <section className="connection-modal meal-close-confirm" role="dialog" aria-modal="true" aria-labelledby="meal-close-title">
+            <p className="today-label">MEAL RECORD</p>
+            <h2 id="meal-close-title">입력한 식단을 저장할까요?</h2>
+            <p>저장하지 않고 닫으면 이번에 입력하거나 변경한 내용은 반영되지 않아요.</p>
+            <div className="meal-close-actions">
+              <button type="button" onClick={() => setMealCloseConfirm(false)}>취소</button>
+              <button className="discard" type="button" onClick={discardAndCloseMeal}>저장하지 않고 닫기</button>
+              <button className="save" type="button" onClick={confirmAndSaveMeal}>저장하기</button>
+            </div>
           </section>
         </div>
       )}
