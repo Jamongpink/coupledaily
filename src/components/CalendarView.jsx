@@ -562,9 +562,24 @@ function CalendarView({
     event.preventDefault()
     const data = new FormData(event.currentTarget)
     setMealSaving(true)
+    setPhotoOptimizing(true)
     setMealError('')
 
     try {
+      const optimizedPhotos = []
+      for (const photo of draftPhotos) {
+        if (photo.path || !photo.file) {
+          optimizedPhotos.push(photo)
+          continue
+        }
+        const file = await compressImage(photo.file)
+        optimizedPhotos.push({
+          ...photo,
+          file,
+          optimizedSize: file.size,
+        })
+      }
+
       const roundedMealTime = roundDateTimeToHalfHour(
         inputDate(selectedDate),
         data.get('mealTime'),
@@ -576,7 +591,7 @@ function CalendarView({
         mealType,
         time: roundedMealTime.time,
         memo: data.get('mealMemo'),
-        photos: draftPhotos,
+        photos: optimizedPhotos,
       })
 
       const rows = await getMealsForDate(coupleId, inputDate(selectedDate))
@@ -605,6 +620,7 @@ function CalendarView({
       setMealError(error.message || '식단을 저장하지 못했습니다.')
     } finally {
       setMealSaving(false)
+      setPhotoOptimizing(false)
     }
   }
 
@@ -614,25 +630,20 @@ function CalendarView({
     event.target.value = ''
     if (!files.length) return
 
-    setPhotoOptimizing(true)
     setMealError('')
     try {
       const nextPhotos = []
       for (const sourceFile of files) {
-        const file = await compressImage(sourceFile)
         nextPhotos.push({
-          name: file.name,
-          url: URL.createObjectURL(file),
-          file,
+          name: sourceFile.name,
+          url: URL.createObjectURL(sourceFile),
+          file: sourceFile,
           originalSize: sourceFile.size,
-          optimizedSize: file.size,
         })
       }
       setDraftPhotos((current) => [...current, ...nextPhotos].slice(0, 3))
     } catch (error) {
-      setMealError(error.message || '사진을 최적화하지 못했습니다.')
-    } finally {
-      setPhotoOptimizing(false)
+      setMealError(error.message || '사진을 추가하지 못했습니다.')
     }
   }
 
@@ -678,7 +689,6 @@ function CalendarView({
       return
     }
 
-    setPhotoOptimizing(true)
     setCameraError('')
     try {
       const canvas = document.createElement('canvas')
@@ -695,19 +705,15 @@ function CalendarView({
         )
       })
       const sourceFile = new File([blob], `camera-${Date.now()}.jpg`, { type: 'image/jpeg' })
-      const file = await compressImage(sourceFile)
       setDraftPhotos((current) => [...current, {
-        name: file.name,
-        url: URL.createObjectURL(file),
-        file,
+        name: sourceFile.name,
+        url: URL.createObjectURL(sourceFile),
+        file: sourceFile,
         originalSize: sourceFile.size,
-        optimizedSize: file.size,
       }].slice(0, 3))
       stopMealCamera()
     } catch (error) {
       setCameraError(error.message || '사진을 촬영하지 못했어요.')
-    } finally {
-      setPhotoOptimizing(false)
     }
   }
 
@@ -1339,7 +1345,7 @@ function CalendarView({
                     </>
                   ) : null}
                 </div>
-                <small>최대 3장까지 선택할 수 있으며, 긴 변 1280px·약 50% 화질로 자동 최적화됩니다.</small>
+                <small>최대 3장까지 선택할 수 있으며, 저장할 때 긴 변 1280px·약 50% 화질로 자동 최적화됩니다.</small>
                 {photoOptimizing ? <p className="photo-optimizing-status">사진 용량과 화질을 최적화하고 있어요...</p> : null}
               </div>
               <label className="form-field"><span>작성 내용</span><textarea name="mealMemo" defaultValue={meals[mealType]?.mine?.memo || ''} placeholder="무엇을 먹었는지 적어주세요." /></label>
