@@ -2866,13 +2866,15 @@ h1 {
 .meal-photo-preview-list figure { position: relative; min-width: 0; aspect-ratio: 1; margin: 0; overflow: hidden; border-radius: 12px; background: #f0ede6; }
 .meal-photo-preview-list img, .meal-photo-gallery img { width: 100%; height: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 12px; }
 .meal-photo-preview-list figure button { position: absolute; top: 5px; right: 5px; display: grid; place-items: center; width: 25px; height: 25px; border: 0; border-radius: 50%; background: rgba(30,36,34,.72); color: #fff; font-size: 1rem; cursor: pointer; }
-.meal-photo-upload { display: grid; place-items: center; align-content: center; gap: 4px; aspect-ratio: 1; border: 1px dashed #aab9b4; border-radius: 12px; background: #f8f8f4; color: var(--primary-dark); cursor: pointer; }
+.meal-photo-upload { display: grid; place-items: center; align-content: center; gap: 4px; aspect-ratio: 1; border: 1px dashed #aab9b4; border-radius: 12px; background: #f8f8f4; color: var(--primary-dark); font: inherit; cursor: pointer; }
 .meal-photo-upload.camera { border-style: solid; background: #e8f4f0; }
 .meal-photo-upload.album { background: #faf7f0; }
 .meal-photo-upload input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
 .meal-photo-upload span { font-size: 1.4rem; line-height: 1; }
 .meal-photo-upload strong { padding-inline: 3px; font-size: .68rem; text-align: center; line-height: 1.25; }
 .meal-photo-upload:has(input:disabled) { opacity: .55; cursor: wait; }
+.meal-photo-upload:disabled { opacity: .55; cursor: wait; }
+.camera-file-fallback { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
 .photo-optimizing-status { margin: 7px 0 0; color: var(--primary-dark); font-size: .76rem; font-weight: 750; }
 .meal-delete-actions { display: flex; align-items: center; justify-content: space-between; gap: 10px; border-top: 1px solid rgba(182,83,77,.15); padding-top: 13px; }
 .meal-delete-actions > span { color: #8d5048; font-size: .8rem; font-weight: 750; }
@@ -2888,6 +2890,13 @@ h1 {
 .meal-close-actions button { border: 0; border-radius: 10px; padding: 10px 13px; background: #eceae4; color: #555b57; font-weight: 800; cursor: pointer; }
 .meal-close-actions .discard { background: #fff0ed; color: #a34f3d; }
 .meal-close-actions .save { background: var(--primary); color: #fff; }
+.meal-camera-backdrop { z-index: 32; background: rgba(8, 12, 11, .82); backdrop-filter: none; }
+.meal-camera-modal { width: min(100%, 520px); display: grid; gap: 14px; }
+.meal-camera-modal video { width: 100%; max-height: 70vh; border-radius: 18px; background: #111; object-fit: contain; }
+.meal-camera-modal p { margin: 0; border-radius: 10px; background: #fff0ed; color: #a34f3d; padding: 10px 12px; font-size: .82rem; }
+.meal-camera-modal > div { display: flex; justify-content: center; gap: 12px; }
+.meal-camera-modal button { min-width: 110px; border: 0; border-radius: 999px; background: #fff; color: var(--ink); padding: 12px 18px; font-weight: 850; cursor: pointer; }
+.meal-camera-modal button.capture { background: var(--primary); color: #fff; }
 .meal-photo-empty { display: grid; place-items: center; gap: 7px; min-height: 150px; border: 1px dashed #d0c9be; border-radius: 14px; background: #f7f4ee; color: var(--muted); font-size: .84rem; }
 .meal-photo-empty span { font-size: 2rem; }
 .meal-status { margin: 12px 2px 0; color: var(--muted); font-size: .84rem; }

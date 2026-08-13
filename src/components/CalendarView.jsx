@@ -107,9 +107,14 @@ function CalendarView({
   const [mealSaving, setMealSaving] = useState(false)
   const [mealError, setMealError] = useState('')
   const [photoOptimizing, setPhotoOptimizing] = useState(false)
+  const [cameraOpen, setCameraOpen] = useState(false)
+  const [cameraError, setCameraError] = useState('')
   const [mealDeleteConfirm, setMealDeleteConfirm] = useState(false)
   const [mealCloseConfirm, setMealCloseConfirm] = useState(false)
   const mealFormRef = useRef(null)
+  const cameraVideoRef = useRef(null)
+  const cameraStreamRef = useRef(null)
+  const cameraFileRef = useRef(null)
   const scheduleFormRef = useRef(null)
   const [meals, setMeals] = useState(initialMeals)
   const [schedules, setSchedules] = useState([])
@@ -630,6 +635,85 @@ function CalendarView({
       setPhotoOptimizing(false)
     }
   }
+
+  const stopMealCamera = () => {
+    cameraStreamRef.current?.getTracks().forEach((track) => track.stop())
+    cameraStreamRef.current = null
+    if (cameraVideoRef.current) cameraVideoRef.current.srcObject = null
+    setCameraOpen(false)
+    setCameraError('')
+  }
+
+  const openMealCamera = async () => {
+    if (photoOptimizing || draftPhotos.length >= 3) return
+    setCameraError('')
+
+    if (!navigator.mediaDevices?.getUserMedia) {
+      cameraFileRef.current?.click()
+      return
+    }
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { ideal: 'environment' } },
+        audio: false,
+      })
+      cameraStreamRef.current = stream
+      setCameraOpen(true)
+    } catch {
+      setMealError('카메라 권한을 허용해 주세요. 앨범 선택은 계속 사용할 수 있어요.')
+    }
+  }
+
+  useEffect(() => {
+    if (!cameraOpen || !cameraVideoRef.current || !cameraStreamRef.current) return
+    cameraVideoRef.current.srcObject = cameraStreamRef.current
+    cameraVideoRef.current.play().catch(() => {})
+  }, [cameraOpen])
+
+  const captureMealPhoto = async () => {
+    const video = cameraVideoRef.current
+    if (!video?.videoWidth || !video?.videoHeight) {
+      setCameraError('카메라 화면을 준비하고 있어요. 잠시 후 다시 눌러주세요.')
+      return
+    }
+
+    setPhotoOptimizing(true)
+    setCameraError('')
+    try {
+      const canvas = document.createElement('canvas')
+      canvas.width = video.videoWidth
+      canvas.height = video.videoHeight
+      const context = canvas.getContext('2d')
+      if (!context) throw new Error('사진을 촬영하지 못했어요.')
+      context.drawImage(video, 0, 0)
+      const blob = await new Promise((resolve, reject) => {
+        canvas.toBlob(
+          (result) => result ? resolve(result) : reject(new Error('사진을 촬영하지 못했어요.')),
+          'image/jpeg',
+          0.92,
+        )
+      })
+      const sourceFile = new File([blob], `camera-${Date.now()}.jpg`, { type: 'image/jpeg' })
+      const file = await compressImage(sourceFile)
+      setDraftPhotos((current) => [...current, {
+        name: file.name,
+        url: URL.createObjectURL(file),
+        file,
+        originalSize: sourceFile.size,
+        optimizedSize: file.size,
+      }].slice(0, 3))
+      stopMealCamera()
+    } catch (error) {
+      setCameraError(error.message || '사진을 촬영하지 못했어요.')
+    } finally {
+      setPhotoOptimizing(false)
+    }
+  }
+
+  useEffect(() => () => {
+    cameraStreamRef.current?.getTracks().forEach((track) => track.stop())
+  }, [])
 
   const removeDraftPhoto = (index) => {
     setDraftPhotos((current) => {
@@ -1223,17 +1307,24 @@ function CalendarView({
                   ))}
                   {draftPhotos.length < 3 ? (
                     <>
-                      <label className="meal-photo-upload camera">
-                        <input
-                          type="file"
-                          accept="image/*"
-                          capture="environment"
-                          disabled={photoOptimizing}
-                          onChange={selectMealPhotos}
-                        />
+                      <button
+                        className="meal-photo-upload camera"
+                        type="button"
+                        disabled={photoOptimizing}
+                        onClick={openMealCamera}
+                      >
                         <span aria-hidden="true">📷</span>
                         <strong>{photoOptimizing ? '최적화 중' : '카메라로 촬영'}</strong>
-                      </label>
+                      </button>
+                      <input
+                        ref={cameraFileRef}
+                        className="camera-file-fallback"
+                        type="file"
+                        accept="image/*"
+                        capture="environment"
+                        disabled={photoOptimizing}
+                        onChange={selectMealPhotos}
+                      />
                       <label className="meal-photo-upload album">
                         <input
                           type="file"
@@ -1288,6 +1379,21 @@ function CalendarView({
               <button type="button" onClick={() => setMealCloseConfirm(false)}>취소</button>
               <button className="discard" type="button" onClick={discardAndCloseMeal}>저장하지 않고 닫기</button>
               <button className="save" type="button" onClick={confirmAndSaveMeal}>저장하기</button>
+            </div>
+          </section>
+        </div>
+      )}
+
+      {modal === 'meal' && cameraOpen && (
+        <div className="modal-backdrop meal-camera-backdrop">
+          <section className="meal-camera-modal" role="dialog" aria-modal="true" aria-label="식단 사진 촬영">
+            <video ref={cameraVideoRef} autoPlay muted playsInline aria-label="카메라 미리보기" />
+            {cameraError ? <p role="alert">{cameraError}</p> : null}
+            <div>
+              <button type="button" onClick={stopMealCamera} disabled={photoOptimizing}>취소</button>
+              <button className="capture" type="button" onClick={captureMealPhoto} disabled={photoOptimizing}>
+                {photoOptimizing ? '최적화 중...' : '촬영'}
+              </button>
             </div>
           </section>
         </div>
