@@ -47,6 +47,21 @@ Deno.serve(async (request) => {
     .maybeSingle()
   if (!partnerMembership) return json({ sent: 0 })
 
+  const { data: senderProfile } = await adminClient
+    .from('profiles')
+    .select('nickname')
+    .eq('id', authData.user.id)
+    .maybeSingle()
+  const senderName = String(
+    senderProfile?.nickname
+      || authData.user.user_metadata?.name
+      || authData.user.user_metadata?.full_name
+      || '상대방',
+  ).trim().slice(0, 30)
+  const notificationBody = String(
+    payload.body || '파트너가 새로운 기록을 남겼어요.',
+  ).replaceAll('파트너', senderName)
+
   const { data: subscriptions } = await adminClient
     .from('push_subscriptions')
     .select('id, endpoint, p256dh, auth_key, preferences')
@@ -71,7 +86,7 @@ Deno.serve(async (request) => {
         keys: { p256dh: subscription.p256dh, auth: subscription.auth_key },
       }, JSON.stringify({
         title: String(payload.title || 'CoupleDaily').slice(0, 80),
-        body: String(payload.body || '파트너가 새로운 기록을 남겼어요.').slice(0, 180),
+        body: notificationBody.slice(0, 180),
         url: String(payload.url || '/'),
         tag: `coupledaily-${payload.category}`,
       }), { TTL: 3600, urgency: 'high' })
