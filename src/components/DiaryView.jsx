@@ -34,6 +34,12 @@ function DiaryView({
   const dateKey = toDateKey(selectedDate)
   const myDiary = diaries.find((diary) => diary.user_id === userId)
   const partnerDiary = diaries.find((diary) => diary.user_id !== userId)
+  const draftKey = `coupledaily:diary-draft:${userId}:${dateKey}`
+
+  const clearDraft = () => {
+    window.localStorage.removeItem(draftKey)
+    window.localStorage.removeItem('coupledaily:resume-editor')
+  }
 
   useEffect(() => {
     let active = true
@@ -43,7 +49,17 @@ function DiaryView({
 
     getDiariesForDate(coupleId, dateKey)
       .then((data) => {
-        if (active) setDiaries(data)
+        if (!active) return
+        setDiaries(data)
+        try {
+          const draft = JSON.parse(window.localStorage.getItem(draftKey) || 'null')
+          if (draft?.content !== undefined) {
+            setContent(draft.content)
+            setIsEditing(true)
+          }
+        } catch {
+          window.localStorage.removeItem(draftKey)
+        }
       })
       .catch((loadError) => {
         if (active) setError(loadError.message || '일기를 불러오지 못했어요.')
@@ -55,7 +71,7 @@ function DiaryView({
     return () => {
       active = false
     }
-  }, [coupleId, dateKey])
+  }, [coupleId, dateKey, draftKey])
 
   const moveDay = (amount) => {
     setSelectedDate((current) => {
@@ -69,7 +85,20 @@ function DiaryView({
     setContent(myDiary?.content || '')
     setError('')
     setIsEditing(true)
+    window.localStorage.setItem(
+      'coupledaily:resume-editor',
+      JSON.stringify({ type: 'diary', userId, date: dateKey }),
+    )
   }
+
+  useEffect(() => {
+    if (!isEditing) return
+    window.localStorage.setItem(draftKey, JSON.stringify({ content, updatedAt: Date.now() }))
+    window.localStorage.setItem(
+      'coupledaily:resume-editor',
+      JSON.stringify({ type: 'diary', userId, date: dateKey }),
+    )
+  }, [content, dateKey, draftKey, isEditing, userId])
 
   useEffect(() => {
     if (!openEditorOnMount || loading) return
@@ -92,6 +121,7 @@ function DiaryView({
       const saved = await saveDiary({ coupleId, date: dateKey, content })
       setDiaries((current) => [...current.filter((diary) => diary.user_id !== userId), saved])
       window.dispatchEvent(new CustomEvent('coupledaily:diaries-changed', { detail: { date: dateKey } }))
+      clearDraft()
       setIsEditing(false)
     } catch (saveError) {
       setError(saveError.message || '일기를 저장하지 못했어요.')
@@ -109,6 +139,7 @@ function DiaryView({
       setDiaries((current) => current.filter((diary) => diary.id !== myDiary.id))
       window.dispatchEvent(new CustomEvent('coupledaily:diaries-changed', { detail: { date: dateKey } }))
       setContent('')
+      clearDraft()
       setIsEditing(false)
     } catch (deleteError) {
       setError(deleteError.message || '일기를 삭제하지 못했어요.')
@@ -151,7 +182,7 @@ function DiaryView({
             <span>{content.length.toLocaleString()} / 5,000</span>
             <div>
               {myDiary && <button className="danger" type="button" onClick={handleDelete} disabled={saving}>삭제</button>}
-              <button className="secondary" type="button" onClick={() => setIsEditing(false)} disabled={saving}>취소</button>
+              <button className="secondary" type="button" onClick={() => { clearDraft(); setIsEditing(false) }} disabled={saving}>취소</button>
               <button className="primary" type="submit" disabled={saving || !content.trim()}>{saving ? '저장 중...' : myDiary ? '수정하기' : '저장하기'}</button>
             </div>
           </div>

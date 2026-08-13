@@ -76,7 +76,12 @@ export async function saveSchedule({
 
   const { data, error } = await query.select('id').single()
   if (error) throw error
-  notifyPartner('schedules', '새 일정', `파트너가 “${title.trim()}” 일정을 ${id ? '수정' : '등록'}했어요.`)
+  notifyPartner(
+    'schedules',
+    '새 일정',
+    `파트너가 “${title.trim()}” 일정을 ${id ? '수정' : '등록'}했어요.`,
+    `/?daily=${startDate}`,
+  )
   return data.id
 }
 

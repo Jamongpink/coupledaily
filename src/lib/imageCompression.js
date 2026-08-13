@@ -1,5 +1,5 @@
-const MAX_DIMENSION = 1600
-const JPEG_QUALITY = 0.8
+const MAX_DIMENSION = 1280
+const JPEG_QUALITY = 0.5
 const MAX_SOURCE_BYTES = 25 * 1024 * 1024
 
 const loadImage = async (file) => {

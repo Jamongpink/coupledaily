@@ -91,6 +91,7 @@ function CalendarView({
   partnerBirthday,
   homeResetKey,
   goalRefreshKey,
+  dailyOpenRequest,
   onDetailChange,
   onOpenDiaryEditor,
 }) {
@@ -108,12 +109,14 @@ function CalendarView({
   const [photoOptimizing, setPhotoOptimizing] = useState(false)
   const [mealDeleteConfirm, setMealDeleteConfirm] = useState(false)
   const mealFormRef = useRef(null)
+  const scheduleFormRef = useRef(null)
   const [meals, setMeals] = useState(initialMeals)
   const [schedules, setSchedules] = useState([])
   const [selectedSchedule, setSelectedSchedule] = useState(null)
   const [scheduleLoading, setScheduleLoading] = useState(false)
   const [scheduleSaving, setScheduleSaving] = useState(false)
   const [scheduleError, setScheduleError] = useState('')
+  const [scheduleDraft, setScheduleDraft] = useState(null)
   const [deleteConfirm, setDeleteConfirm] = useState(false)
   const [monthlyGoals, setMonthlyGoals] = useState([])
   const [goalsLoading, setGoalsLoading] = useState(false)
@@ -161,6 +164,50 @@ function CalendarView({
   )
   const myTodayDiary = todayDiaries.find((diary) => diary.user_id === userId)
   const partnerTodayDiary = todayDiaries.find((diary) => diary.user_id !== userId)
+  const scheduleDraftKey = `coupledaily:schedule-draft:${userId}`
+
+  const clearScheduleDraft = () => {
+    window.localStorage.removeItem(scheduleDraftKey)
+    window.localStorage.removeItem('coupledaily:resume-editor')
+    setScheduleDraft(null)
+  }
+
+  useEffect(() => {
+    try {
+      const resume = JSON.parse(window.localStorage.getItem('coupledaily:resume-editor') || 'null')
+      if (resume?.type !== 'schedule' || resume.userId !== userId) return
+      const draft = JSON.parse(window.localStorage.getItem(scheduleDraftKey) || 'null')
+      if (!draft?.fields || !draft.selectedDate) return
+      const restoredDate = new Date(`${draft.selectedDate}T00:00:00`)
+      setSelectedDate(restoredDate)
+      setMonth(new Date(restoredDate.getFullYear(), restoredDate.getMonth(), 1))
+      setSelectedSchedule(draft.selectedSchedule || null)
+      setScheduleDraft(draft)
+      setScreen('day')
+      setModal('schedule')
+      onDetailChange?.(true)
+    } catch {
+      window.localStorage.removeItem(scheduleDraftKey)
+      window.localStorage.removeItem('coupledaily:resume-editor')
+      setScheduleDraft(null)
+    }
+  }, [onDetailChange, scheduleDraftKey, userId])
+
+  const rememberScheduleDraft = (form) => {
+    const fields = Object.fromEntries(new FormData(form).entries())
+    const draft = {
+      fields,
+      selectedDate: inputDate(selectedDate),
+      selectedSchedule,
+      updatedAt: Date.now(),
+    }
+    setScheduleDraft(draft)
+    window.localStorage.setItem(scheduleDraftKey, JSON.stringify(draft))
+    window.localStorage.setItem(
+      'coupledaily:resume-editor',
+      JSON.stringify({ type: 'schedule', userId }),
+    )
+  }
 
   useEffect(() => {
     if (!coupleId || !userId) return
@@ -345,6 +392,31 @@ function CalendarView({
     setModal(null)
     onDetailChange?.(false)
   }, [homeResetKey, onDetailChange])
+
+  useEffect(() => {
+    const requestedDate = dailyOpenRequest?.date
+    if (!requestedDate) return
+
+    const nextDate = new Date(`${requestedDate}T00:00:00`)
+    if (Number.isNaN(nextDate.getTime())) return
+    setSelectedDate(nextDate)
+    setMonth(new Date(nextDate.getFullYear(), nextDate.getMonth(), 1))
+    setScreen('day')
+    onDetailChange?.(true)
+
+    const cleanUrl = new URL(window.location.href)
+    cleanUrl.searchParams.delete('daily')
+    window.history.replaceState(
+      {
+        coupleDaily: true,
+        view: 'home',
+        daily: true,
+        selectedDate: requestedDate,
+      },
+      '',
+      `${cleanUrl.pathname}${cleanUrl.search}${cleanUrl.hash}`,
+    )
+  }, [dailyOpenRequest, onDetailChange])
 
   useEffect(() => {
     if (!coupleId || !userId) return
@@ -635,6 +707,7 @@ function CalendarView({
       })
       await loadSchedules()
       setMonthRecordRefresh((current) => current + 1)
+      clearScheduleDraft()
       setModal(null)
       setSelectedSchedule(null)
     } catch (error) {
@@ -653,6 +726,7 @@ function CalendarView({
       await deleteSchedule(selectedSchedule.id)
       await loadSchedules()
       setMonthRecordRefresh((current) => current + 1)
+      clearScheduleDraft()
       setModal(null)
       setSelectedSchedule(null)
       setDeleteConfirm(false)
@@ -664,6 +738,7 @@ function CalendarView({
   }
 
   const openNewSchedule = () => {
+    clearScheduleDraft()
     setSelectedSchedule(null)
     setDeleteConfirm(false)
     setScheduleError('')
@@ -1137,7 +1212,7 @@ function CalendarView({
                     </label>
                   ) : null}
                 </div>
-                <small>최대 3장까지 선택할 수 있으며, 긴 변 1600px·약 80% 화질로 자동 최적화됩니다.</small>
+                <small>최대 3장까지 선택할 수 있으며, 긴 변 1280px·약 50% 화질로 자동 최적화됩니다.</small>
                 {photoOptimizing ? <p className="photo-optimizing-status">사진 용량과 화질을 최적화하고 있어요...</p> : null}
               </div>
               <label className="form-field"><span>작성 내용</span><textarea name="mealMemo" defaultValue={meals[mealType]?.mine?.memo || ''} placeholder="무엇을 먹었는지 적어주세요." /></label>
@@ -1173,7 +1248,7 @@ function CalendarView({
       {modal === 'partnerMeal' && mealOwner === 'partner' && (
         <div className="modal-backdrop">
           <section className="record-modal partner-meal-detail" role="dialog" aria-modal="true">
-            <button className="modal-close" type="button" onClick={() => setModal(null)}>×</button>
+            <button className="modal-close" type="button" onClick={() => { clearScheduleDraft(); setModal(null) }}>×</button>
             <span className="eyebrow">PARTNER MEAL</span>
             <h3>{partnerName}님의 식단 🍚</h3>
             <p>{formatDate(selectedDate)}</p>
@@ -1207,24 +1282,24 @@ function CalendarView({
             <span className="eyebrow">SCHEDULE RECORD</span>
             <h3>{selectedSchedule ? '일정 상세 및 수정' : '일정 등록'} 📅</h3>
             <p>{formatDate(selectedDate)}</p>
-            <form onSubmit={saveSchedule}>
+            <form ref={scheduleFormRef} onSubmit={saveSchedule} onInput={(event) => rememberScheduleDraft(event.currentTarget)}>
               <div className="form-field owner-field"><span>일정 소유자</span><strong><i className="owner-dot me" /> {displayName}</strong><small>본인의 일정만 등록할 수 있어요.</small></div>
-              <label className="form-field"><span>일정 제목</span><input name="title" defaultValue={selectedSchedule?.title || ''} placeholder="예: 마케팅 팀 주간 회의" required /></label>
+              <label className="form-field"><span>일정 제목</span><input name="title" defaultValue={scheduleDraft?.fields?.title ?? selectedSchedule?.title ?? ''} placeholder="예: 마케팅 팀 주간 회의" required /></label>
               <fieldset className="form-fieldset">
                 <legend>일정 스티커</legend>
                 <div className="sticker-picker">
                   {stickers.map(([label, icon], index) => (
-                    <label key={label}><input type="radio" name="sticker" value={icon} defaultChecked={selectedSchedule ? selectedSchedule.sticker === icon : index === 0} /><span>{icon}</span><small>{label}</small></label>
+                    <label key={label}><input type="radio" name="sticker" value={icon} defaultChecked={scheduleDraft?.fields?.sticker ? scheduleDraft.fields.sticker === icon : selectedSchedule ? selectedSchedule.sticker === icon : index === 0} /><span>{icon}</span><small>{label}</small></label>
                   ))}
                 </div>
               </fieldset>
               <div className="date-time-grid">
-                <label className="form-field"><span>시작 날짜</span><input name="startDate" type="date" defaultValue={selectedSchedule?.startDate || defaultScheduleStart.date} required /></label>
-                <label className="form-field"><span>시작 시간</span><input name="startTime" type="time" step="1800" defaultValue={selectedSchedule?.startTime || defaultScheduleStart.time} required /></label>
-                <label className="form-field"><span>종료 날짜</span><input name="endDate" type="date" defaultValue={selectedSchedule?.endDate || defaultScheduleEnd.date} required /></label>
-                <label className="form-field"><span>종료 시간</span><input name="endTime" type="time" step="1800" defaultValue={selectedSchedule?.endTime || defaultScheduleEnd.time} required /></label>
+                <label className="form-field"><span>시작 날짜</span><input name="startDate" type="date" defaultValue={scheduleDraft?.fields?.startDate ?? selectedSchedule?.startDate ?? defaultScheduleStart.date} required /></label>
+                <label className="form-field"><span>시작 시간</span><input name="startTime" type="time" step="1800" defaultValue={scheduleDraft?.fields?.startTime ?? selectedSchedule?.startTime ?? defaultScheduleStart.time} required /></label>
+                <label className="form-field"><span>종료 날짜</span><input name="endDate" type="date" defaultValue={scheduleDraft?.fields?.endDate ?? selectedSchedule?.endDate ?? defaultScheduleEnd.date} required /></label>
+                <label className="form-field"><span>종료 시간</span><input name="endTime" type="time" step="1800" defaultValue={scheduleDraft?.fields?.endTime ?? selectedSchedule?.endTime ?? defaultScheduleEnd.time} required /></label>
               </div>
-              <label className="form-field"><span>메모</span><textarea name="memo" defaultValue={selectedSchedule?.memo || ''} placeholder="일정 내용을 적어주세요." /></label>
+              <label className="form-field"><span>메모</span><textarea name="memo" defaultValue={scheduleDraft?.fields?.memo ?? selectedSchedule?.memo ?? ''} placeholder="일정 내용을 적어주세요." /></label>
               {scheduleError ? <p className="meal-status error">{scheduleError}</p> : null}
               <div className="schedule-form-actions">
                 {selectedSchedule ? (

@@ -29,13 +29,34 @@ self.addEventListener('notificationclick', (event) => {
   const targetUrl = new URL(event.notification.data?.url || '/', self.location.origin).href
 
   event.waitUntil(
-    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
-      const existingClient = clients.find((client) => client.url.startsWith(self.location.origin))
-      if (existingClient) {
-        existingClient.navigate(targetUrl)
-        return existingClient.focus()
-      }
-      return self.clients.openWindow(targetUrl)
-    }),
+    Promise.all([
+      self.registration.getNotifications().then((notifications) => {
+        notifications.forEach((notification) => notification.close())
+      }),
+      'clearAppBadge' in self.navigator
+        ? self.navigator.clearAppBadge().catch(() => {})
+        : Promise.resolve(),
+      self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
+        const existingClient = clients.find((client) => client.url.startsWith(self.location.origin))
+        if (existingClient) {
+          return existingClient.navigate(targetUrl).then(() => existingClient.focus())
+        }
+        return self.clients.openWindow(targetUrl)
+      }),
+    ]),
+  )
+})
+
+self.addEventListener('message', (event) => {
+  if (event.data?.type !== 'CLEAR_NOTIFICATIONS') return
+  event.waitUntil(
+    Promise.all([
+      self.registration.getNotifications().then((notifications) => {
+        notifications.forEach((notification) => notification.close())
+      }),
+      'clearAppBadge' in self.navigator
+        ? self.navigator.clearAppBadge().catch(() => {})
+        : Promise.resolve(),
+    ]),
   )
 })

@@ -1898,7 +1898,7 @@ h1 {
   width: min(calc(100% - 48px), 1120px);
   min-height: 72px;
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   border: 1px solid #e4e0d6;
   border-bottom: 0;
   border-radius: 22px 22px 0 0;
@@ -1941,6 +1941,40 @@ h1 {
 .nav-item:focus-visible {
   color: var(--primary-dark);
   background: #e8f4f0;
+}
+
+.nav-day {
+  position: relative;
+  overflow: visible;
+}
+
+.day-nav-circle {
+  width: 54px;
+  height: 54px;
+  display: grid;
+  place-items: center;
+  margin-top: -24px;
+  border: 5px solid #fffefa;
+  border-radius: 50%;
+  background: #4f9c87;
+  box-shadow: 0 7px 18px rgba(52, 112, 95, .28);
+  color: #fff;
+  font-size: .72rem;
+  font-weight: 900;
+  letter-spacing: .08em;
+  transition: transform 160ms ease, background-color 160ms ease;
+}
+
+.nav-day:hover,
+.nav-day:focus-visible {
+  background: transparent;
+}
+
+.nav-day:hover .day-nav-circle,
+.nav-day:focus-visible .day-nav-circle,
+.nav-day.active .day-nav-circle {
+  transform: translateY(-2px);
+  background: #397d6b;
 }
 
 .nav-item:hover .nav-icon,

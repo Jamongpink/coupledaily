@@ -19,6 +19,8 @@ import {
 import { getMyProfile, saveMyBirthday } from './services/profile'
 
 function App() {
+  const notificationDailyDate = new URLSearchParams(window.location.search).get('daily')
+  const hasNotificationDailyDate = /^\d{4}-\d{2}-\d{2}$/.test(notificationDailyDate || '')
   const [session, setSession] = useState(null)
   const [loading, setLoading] = useState(true)
   const [authLoading, setAuthLoading] = useState(false)
@@ -27,10 +29,15 @@ function App() {
   const [invite, setInvite] = useState(null)
   const [partnerLoading, setPartnerLoading] = useState(false)
   const [activeView, setActiveView] = useState('home')
-  const [isDailyDetail, setIsDailyDetail] = useState(false)
+  const [isDailyDetail, setIsDailyDetail] = useState(hasNotificationDailyDate)
   const [homeResetKey, setHomeResetKey] = useState(0)
   const [goalRefreshKey, setGoalRefreshKey] = useState(0)
   const [openDiaryEditor, setOpenDiaryEditor] = useState(false)
+  const [dailyOpenRequest, setDailyOpenRequest] = useState(() => (
+    hasNotificationDailyDate
+      ? { date: notificationDailyDate, key: 0 }
+      : null
+  ))
   const [birthday, setBirthday] = useState(null)
   const [birthdayLoading, setBirthdayLoading] = useState(true)
   const [birthdaySaving, setBirthdaySaving] = useState(false)
@@ -175,6 +182,15 @@ function App() {
 
   useEffect(() => {
     if (!session) return
+
+    try {
+      const resume = JSON.parse(window.localStorage.getItem('coupledaily:resume-editor') || 'null')
+      if (resume?.userId === session.user.id && resume.type === 'diary') {
+        setActiveView('diary')
+      }
+    } catch {
+      window.localStorage.removeItem('coupledaily:resume-editor')
+    }
 
     const currentState = window.history.state || {}
     if (!currentState.coupleDaily) {
@@ -475,6 +491,7 @@ function App() {
                   partnerBirthday={connection.partner_birthday}
                   homeResetKey={homeResetKey}
                   goalRefreshKey={goalRefreshKey}
+                  dailyOpenRequest={dailyOpenRequest}
                   onDetailChange={setIsDailyDetail}
                   onOpenDiaryEditor={() => {
                     window.history.pushState(
@@ -552,23 +569,46 @@ function App() {
             {[
               ['⌂', '홈', 'home'],
               ['✓', '목표', 'goal'],
+              ['DAY', '데일리', 'day'],
               ['📓', '일기', 'diary'],
               ['⚙', '설정', 'settings'],
             ].map(([icon, label, view]) => (
               <button
-                className={`nav-item ${
-                  activeView === view && !(view === 'home' && isDailyDetail)
+                className={`nav-item ${view === 'day' ? 'nav-day' : ''} ${
+                  (view === 'day' && activeView === 'home' && isDailyDetail)
+                  || (activeView === view && !(view === 'home' && isDailyDetail))
                     ? 'active'
                     : ''
                 }`}
                 type="button"
                 aria-current={
-                  activeView === view && !(view === 'home' && isDailyDetail)
+                  (view === 'day' && activeView === 'home' && isDailyDetail)
+                  || (activeView === view && !(view === 'home' && isDailyDetail))
                     ? 'page'
                     : undefined
                 }
                 onClick={() => {
                   setOpenDiaryEditor(false)
+                  if (view === 'day') {
+                    const now = new Date()
+                    const todayKey = [
+                      now.getFullYear(),
+                      String(now.getMonth() + 1).padStart(2, '0'),
+                      String(now.getDate()).padStart(2, '0'),
+                    ].join('-')
+                    window.history.pushState(
+                      { coupleDaily: true, view: 'home', daily: true, selectedDate: todayKey },
+                      '',
+                      window.location.href,
+                    )
+                    setDailyOpenRequest((current) => ({
+                      date: todayKey,
+                      key: (current?.key || 0) + 1,
+                    }))
+                    setActiveView('home')
+                    setIsDailyDetail(true)
+                    return
+                  }
                   const isSameScreen =
                     activeView === view && !(view === 'home' && isDailyDetail)
                   if (!isSameScreen) {
@@ -586,7 +626,7 @@ function App() {
                 }}
                 key={label}
               >
-                <span className="nav-icon" aria-hidden="true">{icon}</span>
+                <span className={view === 'day' ? 'day-nav-circle' : 'nav-icon'} aria-hidden="true">{icon}</span>
                 <span>{label}</span>
               </button>
             ))}
