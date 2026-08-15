@@ -216,6 +216,44 @@ function App() {
     return () => window.removeEventListener('popstate', handlePopState)
   }, [session])
 
+  useEffect(() => {
+    if (!('serviceWorker' in navigator)) return undefined
+
+    const handleNotificationNavigation = (event) => {
+      if (event.data?.type !== 'OPEN_NOTIFICATION_URL') return
+
+      const targetUrl = new URL(event.data.url || '/', window.location.origin)
+      if (targetUrl.origin !== window.location.origin) return
+
+      const requestedDate = targetUrl.searchParams.get('daily')
+      if (/^\d{4}-\d{2}-\d{2}$/.test(requestedDate || '')) {
+        setActiveView('home')
+        setOpenDiaryEditor(false)
+        setIsDailyDetail(true)
+        setDailyOpenRequest({ date: requestedDate, key: Date.now() })
+        window.history.pushState(
+          { coupleDaily: true, view: 'home', daily: true, selectedDate: requestedDate },
+          '',
+          targetUrl.href,
+        )
+        return
+      }
+
+      setActiveView('home')
+      setOpenDiaryEditor(false)
+      setIsDailyDetail(false)
+      setHomeResetKey((current) => current + 1)
+      window.history.pushState(
+        { coupleDaily: true, view: 'home', daily: false },
+        '',
+        targetUrl.href,
+      )
+    }
+
+    navigator.serviceWorker.addEventListener('message', handleNotificationNavigation)
+    return () => navigator.serviceWorker.removeEventListener('message', handleNotificationNavigation)
+  }, [])
+
   const handleLogin = async () => {
     if (!supabase) {
       setErrorMessage('Supabase 연결이 준비되지 않았습니다.')

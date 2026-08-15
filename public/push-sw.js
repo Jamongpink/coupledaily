@@ -29,21 +29,27 @@ self.addEventListener('notificationclick', (event) => {
   const targetUrl = new URL(event.notification.data?.url || '/', self.location.origin).href
 
   event.waitUntil(
-    Promise.all([
-      self.registration.getNotifications().then((notifications) => {
-        notifications.forEach((notification) => notification.close())
-      }),
-      'clearAppBadge' in self.navigator
-        ? self.navigator.clearAppBadge().catch(() => {})
-        : Promise.resolve(),
-      self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
-        const existingClient = clients.find((client) => client.url.startsWith(self.location.origin))
-        if (existingClient) {
-          return existingClient.navigate(targetUrl).then(() => existingClient.focus())
-        }
-        return self.clients.openWindow(targetUrl)
-      }),
-    ]),
+    (async () => {
+      const notifications = await self.registration.getNotifications().catch(() => [])
+      notifications.forEach((notification) => notification.close())
+
+      if ('clearAppBadge' in self.navigator) {
+        await self.navigator.clearAppBadge().catch(() => {})
+      }
+
+      const clients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true })
+      const existingClient = clients.find((client) => client.url.startsWith(self.location.origin))
+
+      if (!existingClient) {
+        await self.clients.openWindow(targetUrl)
+        return
+      }
+
+      // iOS standalone PWAs do not always apply Client.navigate() after a
+      // notification click. Tell the running app to update its own view first.
+      existingClient.postMessage({ type: 'OPEN_NOTIFICATION_URL', url: targetUrl })
+      await existingClient.focus()
+    })(),
   )
 })
 
