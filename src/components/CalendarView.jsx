@@ -110,8 +110,6 @@ function CalendarView({
   const [cameraOpen, setCameraOpen] = useState(false)
   const [cameraError, setCameraError] = useState('')
   const [mealDeleteConfirm, setMealDeleteConfirm] = useState(false)
-  const [mealCloseConfirm, setMealCloseConfirm] = useState(false)
-  const mealFormRef = useRef(null)
   const cameraVideoRef = useRef(null)
   const cameraStreamRef = useRef(null)
   const cameraFileRef = useRef(null)
@@ -729,11 +727,6 @@ function CalendarView({
     })
   }
 
-  const saveAndCloseMeal = () => {
-    if (mealSaving || photoOptimizing) return
-    setMealCloseConfirm(true)
-  }
-
   const discardAndCloseMeal = () => {
     draftPhotos.forEach((photo) => {
       if (photo.file && photo.url?.startsWith('blob:')) URL.revokeObjectURL(photo.url)
@@ -741,13 +734,7 @@ function CalendarView({
     setDraftPhotos([])
     setMealError('')
     setMealDeleteConfirm(false)
-    setMealCloseConfirm(false)
     setModal(null)
-  }
-
-  const confirmAndSaveMeal = () => {
-    setMealCloseConfirm(false)
-    mealFormRef.current?.requestSubmit()
   }
 
   const removeMeal = async () => {
@@ -1135,7 +1122,6 @@ function CalendarView({
           >
             ← 월간 캘린더
           </button>
-          <h2>{formatDate(selectedDate)}</h2>
           <p>식단과 두 사람의 일정만 한눈에 확인해요.</p>
         </div>
         <div className="date-navigation" aria-label="일일 캘린더 날짜 이동">
@@ -1271,14 +1257,14 @@ function CalendarView({
             <button
               className="modal-close"
               type="button"
-              onClick={saveAndCloseMeal}
+              onClick={discardAndCloseMeal}
               disabled={mealSaving}
               aria-label="식단 창 닫기"
             >
               ×
             </button>
             <span className="eyebrow">MEAL RECORD</span><h3>식단 등록 🍚</h3><p>{formatDate(selectedDate)}</p>
-            <form ref={mealFormRef} onSubmit={saveMeal}>
+            <form onSubmit={saveMeal}>
               <fieldset className="form-fieldset">
                 <legend>식사 종류</legend>
                 <div className="meal-type-tabs">
@@ -1371,7 +1357,7 @@ function CalendarView({
                 </div>
               ) : null}
               <div className="mobile-form-dock" aria-label="식단 등록 작업">
-                <button className="dock-cancel" type="button" onClick={saveAndCloseMeal} disabled={mealSaving || photoOptimizing}>
+                <button className="dock-cancel" type="button" onClick={discardAndCloseMeal} disabled={mealSaving || photoOptimizing}>
                   취소
                 </button>
                 <span aria-hidden="true" />
@@ -1380,21 +1366,6 @@ function CalendarView({
                 </button>
               </div>
             </form>
-          </section>
-        </div>
-      )}
-
-      {modal === 'meal' && mealCloseConfirm && (
-        <div className="modal-backdrop meal-close-confirm-backdrop">
-          <section className="connection-modal meal-close-confirm" role="dialog" aria-modal="true" aria-labelledby="meal-close-title">
-            <p className="today-label">MEAL RECORD</p>
-            <h2 id="meal-close-title">입력한 식단을 저장할까요?</h2>
-            <p>저장하지 않고 닫으면 이번에 입력하거나 변경한 내용은 반영되지 않아요.</p>
-            <div className="meal-close-actions">
-              <button type="button" onClick={() => setMealCloseConfirm(false)}>취소</button>
-              <button className="discard" type="button" onClick={discardAndCloseMeal}>저장하지 않고 닫기</button>
-              <button className="save" type="button" onClick={confirmAndSaveMeal}>저장하기</button>
-            </div>
           </section>
         </div>
       )}
