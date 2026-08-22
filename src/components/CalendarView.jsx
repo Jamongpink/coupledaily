@@ -1138,10 +1138,10 @@ function CalendarView({
           <h2>{formatDate(selectedDate)}</h2>
           <p>식단과 두 사람의 일정만 한눈에 확인해요.</p>
         </div>
-        <div className="date-navigation">
-          <button type="button" onClick={() => moveDay(-1)}>‹</button>
-          <button type="button" onClick={() => setSelectedDate(today)}>오늘</button>
-          <button type="button" onClick={() => moveDay(1)}>›</button>
+        <div className="date-navigation" aria-label="일일 캘린더 날짜 이동">
+          <button type="button" aria-label="이전 날짜" onClick={() => moveDay(-1)}>‹</button>
+          <strong>{formatDate(selectedDate)}</strong>
+          <button type="button" aria-label="다음 날짜" onClick={() => moveDay(1)}>›</button>
         </div>
       </header>
 
@@ -1370,6 +1370,15 @@ function CalendarView({
                   )}
                 </div>
               ) : null}
+              <div className="mobile-form-dock" aria-label="식단 등록 작업">
+                <button className="dock-cancel" type="button" onClick={saveAndCloseMeal} disabled={mealSaving || photoOptimizing}>
+                  취소
+                </button>
+                <span aria-hidden="true" />
+                <button className="dock-save" type="submit" disabled={mealSaving || photoOptimizing}>
+                  {mealSaving || photoOptimizing ? '저장 중...' : '저장'}
+                </button>
+              </div>
             </form>
           </section>
         </div>
@@ -1475,6 +1484,15 @@ function CalendarView({
                 ) : <span />}
                 <button className="modal-submit" type="submit" disabled={scheduleSaving}>
                   {scheduleSaving ? '저장 중...' : selectedSchedule ? '변경사항 저장' : '일정 등록하기'}
+                </button>
+              </div>
+              <div className="mobile-form-dock" aria-label="일정 등록 작업">
+                <button className="dock-cancel" type="button" onClick={() => setModal(null)} disabled={scheduleSaving}>
+                  취소
+                </button>
+                <span aria-hidden="true" />
+                <button className="dock-save" type="submit" disabled={scheduleSaving}>
+                  {scheduleSaving ? '저장 중...' : '저장'}
                 </button>
               </div>
             </form>

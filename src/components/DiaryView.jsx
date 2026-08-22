@@ -180,9 +180,10 @@ function DiaryView({
           />
           <div className="diary-editor-footer">
             <span>{content.length.toLocaleString()} / 5,000</span>
-            <div>
-              {myDiary && <button className="danger" type="button" onClick={handleDelete} disabled={saving}>삭제</button>}
+            {myDiary && <button className="danger diary-delete-button" type="button" onClick={handleDelete} disabled={saving}>삭제</button>}
+            <div className="editor-action-dock" aria-label="일기 등록 작업">
               <button className="secondary" type="button" onClick={() => { clearDraft(); setIsEditing(false) }} disabled={saving}>취소</button>
+              <span aria-hidden="true" />
               <button className="primary" type="submit" disabled={saving || !content.trim()}>{saving ? '저장 중...' : myDiary ? '수정하기' : '저장하기'}</button>
             </div>
           </div>

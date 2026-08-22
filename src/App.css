@@ -226,6 +226,23 @@ h1 {
   display: flex;
   align-items: center;
   gap: 12px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  padding: 0;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.brand-lockup:focus-visible {
+  border-radius: 16px;
+  outline: 3px solid rgba(79, 156, 135, 0.2);
+  outline-offset: 4px;
+}
+
+.brand-copy {
+  display: grid;
 }
 
 .mini-brand-mark {
@@ -1862,6 +1879,10 @@ h1 {
   gap: 8px;
 }
 
+.diary-delete-button {
+  margin-left: auto;
+}
+
 .diary-editor-footer button {
   border: 0;
   border-radius: 999px;
@@ -2251,8 +2272,11 @@ h1 {
 .daily-header h2, .section-title-row h3 { margin: 4px 0 0; }
 .daily-header p, .timeline-description, .record-modal > p { color: var(--muted); margin: 6px 0 0; }
 .text-button { border: 0; background: transparent; color: var(--primary-dark); padding: 0; font-weight: 800; cursor: pointer; }
-.date-navigation { display: flex; gap: 7px; }
-.date-navigation button, .primary-small-button { min-height: 40px; border: 1px solid rgba(73,122,114,.2); border-radius: 12px; background: #fff; color: var(--primary-dark); padding: 0 14px; font-weight: 800; cursor: pointer; }
+.date-navigation { display: grid; grid-template-columns: 44px minmax(190px, 1fr) 44px; align-items: center; overflow: hidden; border: 1px solid rgba(73,122,114,.2); border-radius: 999px; background: #fff; }
+.date-navigation button { min-height: 44px; border: 0; border-radius: 50%; background: transparent; color: var(--primary-dark); padding: 0; font-size: 1.2rem; font-weight: 800; cursor: pointer; }
+.date-navigation button:hover { background: #eaf5f1; }
+.date-navigation strong { padding: 0 10px; text-align: center; font-size: .86rem; white-space: nowrap; }
+.primary-small-button { min-height: 40px; border: 1px solid rgba(73,122,114,.2); border-radius: 12px; background: #fff; color: var(--primary-dark); padding: 0 14px; font-weight: 800; cursor: pointer; }
 .primary-small-button {
   border-color: #438a77;
   background: #4f9c87;
@@ -2394,6 +2418,19 @@ h1 {
 .settings-header > p:last-child {
   margin: 0;
   color: var(--muted);
+}
+
+/* Keep page headings concise; operational notices and errors stay visible. */
+.welcome-section > p:last-child,
+.empty-description,
+.goals-page-header > div > p:last-child,
+.diary-page-header > div:first-child > p:last-child,
+.settings-header > p:last-child,
+.daily-header > div:first-child > p:last-child,
+.diary-section-heading > p,
+.section-helper,
+.timeline-description {
+  display: none;
 }
 
 .settings-grid {
@@ -2921,6 +2958,7 @@ h1 {
 .schedule-form-actions { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .schedule-form-actions .modal-submit { min-width: 180px; padding-inline: 22px; }
 .delete-schedule-button { border: 0; background: transparent; color: #b6534d; font-weight: 800; cursor: pointer; }
+.mobile-form-dock { display: none; }
 .delete-confirm { display: flex; align-items: center; flex-wrap: wrap; gap: 7px; color: #8f3f3b; font-size: .82rem; font-weight: 800; }
 .delete-confirm button { border: 0; border-radius: 8px; background: #eee8df; padding: 7px 9px; font-weight: 800; cursor: pointer; }
 .delete-confirm button.danger { background: #c9635c; color: #fff; }
@@ -3294,13 +3332,94 @@ h1 {
   }
 
   .record-modal h3 {
-    padding-right: 42px;
+    padding-right: 0;
     font-size: 1.45rem;
+  }
+
+  .modal-close {
+    display: none;
   }
 
   .record-modal form {
     gap: 16px;
     margin-top: 20px;
+    padding-bottom: calc(92px + env(safe-area-inset-bottom));
+  }
+
+  .mobile-form-dock,
+  .editor-action-dock {
+    position: fixed;
+    z-index: 20;
+    right: 50%;
+    bottom: calc(12px + env(safe-area-inset-bottom));
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 1px minmax(0, 1fr);
+    align-items: center;
+    width: min(330px, calc(100vw - 40px));
+    min-height: 68px;
+    overflow: hidden;
+    border: 1px solid rgba(73, 122, 114, 0.14);
+    border-radius: 999px;
+    background: rgba(255, 253, 248, 0.96);
+    box-shadow: 0 16px 40px rgba(34, 54, 50, 0.24);
+    backdrop-filter: blur(16px);
+    transform: translateX(50%);
+  }
+
+  .mobile-form-dock > span,
+  .editor-action-dock > span {
+    width: 1px;
+    height: 30px;
+    background: rgba(73, 122, 114, 0.22);
+  }
+
+  .mobile-form-dock button,
+  .editor-action-dock button,
+  .diary-editor-footer .editor-action-dock button {
+    min-width: 0;
+    min-height: 68px;
+    border: 0;
+    border-radius: 0;
+    padding: 0 16px;
+    background: transparent;
+    color: var(--ink);
+    font: inherit;
+    font-size: 1rem;
+    font-weight: 900;
+    cursor: pointer;
+  }
+
+  .mobile-form-dock .dock-save,
+  .editor-action-dock .primary {
+    background: transparent;
+    color: var(--primary-dark);
+  }
+
+  .mobile-form-dock button:disabled,
+  .editor-action-dock button:disabled {
+    cursor: wait;
+    opacity: 0.45;
+  }
+
+  .schedule-form-actions .modal-submit {
+    display: none;
+  }
+
+  .diary-editor {
+    padding-bottom: calc(108px + env(safe-area-inset-bottom));
+  }
+
+  .diary-editor-footer {
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .diary-editor-footer > .editor-action-dock {
+    display: grid;
+  }
+
+  .diary-editor-footer .diary-delete-button {
+    margin-left: auto;
   }
 
   .form-field input,

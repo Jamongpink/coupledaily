@@ -219,6 +219,20 @@ function App() {
   useEffect(() => {
     if (!('serviceWorker' in navigator)) return undefined
 
+    const clearDeliveredNotifications = () => {
+      if (document.visibilityState === 'hidden') return
+
+      if ('clearAppBadge' in navigator) {
+        navigator.clearAppBadge().catch(() => {})
+      }
+
+      navigator.serviceWorker.ready
+        .then((registration) => {
+          registration.active?.postMessage({ type: 'CLEAR_NOTIFICATIONS' })
+        })
+        .catch(() => {})
+    }
+
     const handleNotificationNavigation = (event) => {
       if (event.data?.type !== 'OPEN_NOTIFICATION_URL') return
 
@@ -250,8 +264,18 @@ function App() {
       )
     }
 
+    clearDeliveredNotifications()
     navigator.serviceWorker.addEventListener('message', handleNotificationNavigation)
-    return () => navigator.serviceWorker.removeEventListener('message', handleNotificationNavigation)
+    window.addEventListener('focus', clearDeliveredNotifications)
+    window.addEventListener('pageshow', clearDeliveredNotifications)
+    document.addEventListener('visibilitychange', clearDeliveredNotifications)
+
+    return () => {
+      navigator.serviceWorker.removeEventListener('message', handleNotificationNavigation)
+      window.removeEventListener('focus', clearDeliveredNotifications)
+      window.removeEventListener('pageshow', clearDeliveredNotifications)
+      document.removeEventListener('visibilitychange', clearDeliveredNotifications)
+    }
   }, [])
 
   const handleLogin = async () => {
@@ -377,6 +401,23 @@ function App() {
   const displayName = user?.user_metadata?.name || user?.user_metadata?.full_name || '사용자'
   const currentOrigin = typeof window !== 'undefined' ? window.location.origin : ''
 
+  const handleGoHome = () => {
+    const isAlreadyHome = activeView === 'home' && !isDailyDetail
+    setOpenDiaryEditor(false)
+
+    if (!isAlreadyHome) {
+      window.history.pushState(
+        { coupleDaily: true, view: 'home', daily: false },
+        '',
+        window.location.href,
+      )
+    }
+
+    setActiveView('home')
+    setIsDailyDetail(false)
+    setHomeResetKey((current) => current + 1)
+  }
+
   const EmptyCard = ({ icon, eyebrow, title, description, actionLabel }) => (
     <article className="dashboard-card empty-card">
       <div className="card-heading">
@@ -465,13 +506,13 @@ function App() {
       ) : (
         <div className="dashboard-shell">
           <header className="dashboard-header">
-            <div className="brand-lockup">
-              <div className="mini-brand-mark" aria-hidden="true">♡</div>
-              <div>
-                <p className="brand-name">CoupleDaily</p>
-                <p className="brand-subtitle">우리의 하루를 차곡차곡</p>
-              </div>
-            </div>
+            <button className="brand-lockup" type="button" onClick={handleGoHome} aria-label="CoupleDaily 홈으로 이동">
+              <span className="mini-brand-mark" aria-hidden="true">♡</span>
+              <span className="brand-copy">
+                <span className="brand-name">CoupleDaily</span>
+                <span className="brand-subtitle">우리의 하루를 차곡차곡</span>
+              </span>
+            </button>
             <button
               className="header-logout"
               type="button"
