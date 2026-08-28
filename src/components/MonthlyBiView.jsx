@@ -50,7 +50,7 @@ export default function MonthlyBiView({ userId, displayName, partnerName }) {
     }
   }, [month])
 
-  useEffect(() => { load(false) }, [load])
+  useEffect(() => { load(isCurrentMonth) }, [isCurrentMonth, load])
   const stats = snapshot?.stats || {}
   const people = useMemo(() => stats.users || {}, [stats.users])
   const mine = people[userId] || {}
@@ -84,15 +84,6 @@ export default function MonthlyBiView({ userId, displayName, partnerName }) {
             <PersonStats title={displayName} tone="mine" stats={mine} />
             <PersonStats title={partnerName} tone="partner" stats={partnerEntry} />
           </div>
-          <article className="bi-together-card">
-            <span className="eyebrow">TOGETHER</span><h3>함께 기록한 이번 달</h3>
-            <div className="bi-kpi-grid">
-              <div><strong>{stats.together?.activeDays || 0}</strong><span>함께 활동한 날</span></div>
-              <div><strong>{stats.together?.bothMealDays || 0}</strong><span>둘 다 식단 기록</span></div>
-              <div><strong>{stats.together?.bothScheduleDays || 0}</strong><span>둘 다 일정 기록</span></div>
-              <div><strong>{stats.together?.bothDiaryDays || 0}</strong><span>둘 다 일기 기록</span></div>
-            </div>
-          </article>
         </>
       ) : null}
     </section>

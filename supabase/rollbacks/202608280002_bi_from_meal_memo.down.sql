@@ -1,0 +1,2 @@
+-- Rollback requires restoring the definitions from 202608280001_monthly_bi_and_food_tags.sql.
+-- Reapply that migration's meal_food_items table, triggers, and calculate_monthly_bi function.
