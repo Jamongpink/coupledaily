@@ -6,6 +6,7 @@ import AnniversarySummary from './components/AnniversarySummary'
 import BirthdaySummary from './components/BirthdaySummary'
 import SettingsView from './components/SettingsView'
 import GoalView from './components/GoalView'
+import MonthlyBiView from './components/MonthlyBiView'
 import PartnerConnection from './components/PartnerConnection'
 import { getSupabaseConnectionError, supabase } from './lib/supabase'
 import {
@@ -541,6 +542,12 @@ function App() {
                 onDeleteAccount={handleDeleteAccount}
                 onLogout={handleLogout}
               />
+            ) : connection?.partner_id && activeView === 'bi' ? (
+              <MonthlyBiView
+                userId={user.id}
+                displayName={displayName}
+                partnerName={connection.partner_nickname || '파트너'}
+              />
             ) : connection?.partner_id && activeView === 'home' ? (
               <>
                 {!isDailyDetail ? (
@@ -650,6 +657,7 @@ function App() {
               ['✓', '목표', 'goal'],
               ['DAY', '데일리', 'day'],
               ['📓', '일기', 'diary'],
+              ['📊', 'BI', 'bi'],
               ['⚙', '설정', 'settings'],
             ].map(([icon, label, view]) => (
               <button

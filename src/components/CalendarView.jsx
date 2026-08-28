@@ -3,6 +3,7 @@ import {
   deleteMeal,
   getMealDatesForMonth,
   getMealsForDate,
+  getFoodSuggestions,
   saveMeal as saveMealRecord,
 } from '../services/meals'
 import {
@@ -103,6 +104,9 @@ function CalendarView({
   const [mealType, setMealType] = useState('lunch')
   const [mealOwner, setMealOwner] = useState('mine')
   const [draftPhotos, setDraftPhotos] = useState([])
+  const [draftFoods, setDraftFoods] = useState([])
+  const [foodQuery, setFoodQuery] = useState('')
+  const [foodSuggestions, setFoodSuggestions] = useState([])
   const [mealLoading, setMealLoading] = useState(false)
   const [mealSaving, setMealSaving] = useState(false)
   const [mealError, setMealError] = useState('')
@@ -134,6 +138,25 @@ function CalendarView({
   const [monthRecordRefresh, setMonthRecordRefresh] = useState(0)
   const [todayDiaries, setTodayDiaries] = useState([])
   const [todayDiariesLoading, setTodayDiariesLoading] = useState(true)
+
+  useEffect(() => {
+    if (modal !== 'meal' || !coupleId) return
+    const timer = window.setTimeout(() => {
+      getFoodSuggestions(coupleId, foodQuery)
+        .then(setFoodSuggestions)
+        .catch(() => setFoodSuggestions([]))
+    }, 180)
+    return () => window.clearTimeout(timer)
+  }, [coupleId, foodQuery, modal])
+
+  const addDraftFood = (value) => {
+    const name = value.trim().replace(/\s+/g, ' ')
+    if (!name || draftFoods.length >= 10) return
+    const normalized = name.toLocaleLowerCase('ko-KR')
+    if (draftFoods.some((food) => food.toLocaleLowerCase('ko-KR') === normalized)) return
+    setDraftFoods((current) => [...current, name])
+    setFoodQuery('')
+  }
 
   const monthCells = useMemo(() => {
     const blanks = new Date(month.getFullYear(), month.getMonth(), 1).getDay()
@@ -477,6 +500,7 @@ function CalendarView({
             time: meal.meal_time.slice(0, 5),
             memo: meal.memo,
             photos: meal.photos,
+            foods: meal.foods,
           }
         })
 
@@ -590,6 +614,7 @@ function CalendarView({
         time: roundedMealTime.time,
         memo: data.get('mealMemo'),
         photos: optimizedPhotos,
+        foodNames: draftFoods,
       })
 
       const rows = await getMealsForDate(coupleId, inputDate(selectedDate))
@@ -604,6 +629,7 @@ function CalendarView({
           time: meal.meal_time.slice(0, 5),
           memo: meal.memo,
           photos: meal.photos,
+          foods: meal.foods,
         }
       })
 
@@ -612,6 +638,7 @@ function CalendarView({
         if (photo.file && photo.url?.startsWith('blob:')) URL.revokeObjectURL(photo.url)
       })
       setDraftPhotos([])
+      setDraftFoods([])
       setModal(null)
       setMonthRecordRefresh((current) => current + 1)
     } catch (error) {
@@ -732,6 +759,8 @@ function CalendarView({
       if (photo.file && photo.url?.startsWith('blob:')) URL.revokeObjectURL(photo.url)
     })
     setDraftPhotos([])
+    setDraftFoods([])
+    setFoodQuery('')
     setMealError('')
     setMealDeleteConfirm(false)
     setModal(null)
@@ -1154,6 +1183,8 @@ function CalendarView({
                     setMealType(key)
                     setMealOwner('mine')
                     setDraftPhotos(meal.mine?.photos || [])
+                    setDraftFoods(meal.mine?.foods || [])
+                    setFoodQuery('')
                     setMealDeleteConfirm(false)
                     setModal('meal')
                   }}
@@ -1282,6 +1313,37 @@ function CalendarView({
                   required
                 />
               </label>
+              <div className="form-field meal-food-field">
+                <span>먹은 음식</span>
+                <div className="meal-food-input-row">
+                  <input
+                    value={foodQuery}
+                    maxLength={40}
+                    placeholder="음식명을 입력하세요"
+                    onChange={(event) => setFoodQuery(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter') {
+                        event.preventDefault()
+                        addDraftFood(foodQuery)
+                      }
+                    }}
+                  />
+                  <button type="button" onClick={() => addDraftFood(foodQuery)} disabled={!foodQuery.trim() || draftFoods.length >= 10}>추가</button>
+                </div>
+                {foodSuggestions.length ? (
+                  <div className="food-suggestions" aria-label="이전에 입력한 음식">
+                    {foodSuggestions.filter((item) => !draftFoods.some((food) => food.toLocaleLowerCase('ko-KR') === item.name.toLocaleLowerCase('ko-KR'))).map((item) => (
+                      <button type="button" key={item.name} onClick={() => addDraftFood(item.name)}>{item.name}</button>
+                    ))}
+                  </div>
+                ) : null}
+                {draftFoods.length ? (
+                  <div className="selected-foods">
+                    {draftFoods.map((food) => <button type="button" key={food} onClick={() => setDraftFoods((current) => current.filter((item) => item !== food))}>{food} <span>×</span></button>)}
+                  </div>
+                ) : null}
+                <small>최대 10개까지 등록할 수 있으며, 이전 음식명이 자동완성으로 표시됩니다.</small>
+              </div>
               <div className="form-field">
                 <span>음식 사진</span>
                 <div className="meal-photo-preview-list">
@@ -1396,6 +1458,7 @@ function CalendarView({
               <div><span>식사 종류</span><strong>{mealTypes.find(([key]) => key === mealType)?.[1]}</strong></div>
               <div><span>식사 시간</span><strong>{meals[mealType].partner.time}</strong></div>
               <div><span>작성 내용</span><strong>{meals[mealType].partner.memo || '작성된 메모가 없어요.'}</strong></div>
+              <div><span>먹은 음식</span><strong>{meals[mealType].partner.foods?.join(', ') || '등록된 음식명이 없어요.'}</strong></div>
             </div>
             <div className="meal-detail-photos">
               <span>음식 사진</span>

@@ -33,13 +33,45 @@ async function addSignedUrls(meals) {
 export async function getMealsForDate(coupleId, date) {
   const { data, error } = await supabase
     .from('meals')
-    .select('id, user_id, meal_type, meal_time, memo, meal_photos(id, storage_path, sort_order)')
+    .select('id, user_id, meal_type, meal_time, memo, meal_photos(id, storage_path, sort_order), meal_food_items(id, food_name, normalized_name)')
     .eq('couple_id', coupleId)
     .eq('meal_date', date)
     .order('meal_time')
 
   if (error) throw error
-  return addSignedUrls(data || [])
+  return addSignedUrls((data || []).map((meal) => ({
+    ...meal,
+    foods: (meal.meal_food_items || []).map((item) => item.food_name),
+  })))
+}
+
+export async function getFoodSuggestions(coupleId, query = '') {
+  let request = supabase
+    .from('meal_food_items')
+    .select('food_name, normalized_name, created_at')
+    .eq('couple_id', coupleId)
+    .order('created_at', { ascending: false })
+    .limit(200)
+
+  const normalizedQuery = query.trim().toLocaleLowerCase('ko-KR')
+  if (normalizedQuery) request = request.ilike('normalized_name', `%${normalizedQuery}%`)
+
+  const { data, error } = await request
+  if (error) throw error
+
+  const grouped = new Map()
+  ;(data || []).forEach((item) => {
+    const current = grouped.get(item.normalized_name)
+    grouped.set(item.normalized_name, {
+      name: current?.name || item.food_name,
+      count: (current?.count || 0) + 1,
+      latest: current?.latest || item.created_at,
+    })
+  })
+
+  return [...grouped.values()]
+    .sort((a, b) => b.count - a.count || b.latest.localeCompare(a.latest))
+    .slice(0, 8)
 }
 
 export async function getMealDatesForMonth(coupleId, monthStart, monthEnd) {
@@ -61,6 +93,7 @@ export async function saveMeal({
   time,
   memo,
   photos,
+  foodNames = [],
 }) {
   const { data: authData, error: authError } = await supabase.auth.getUser()
   if (authError) throw authError
@@ -140,6 +173,31 @@ export async function saveMeal({
         })),
       )
     if (photoRowsError) throw photoRowsError
+  }
+
+  const { error: deleteFoodsError } = await supabase
+    .from('meal_food_items')
+    .delete()
+    .eq('meal_id', meal.id)
+  if (deleteFoodsError) throw deleteFoodsError
+
+  const uniqueFoods = [...new Map(
+    foodNames
+      .map((name) => name.trim())
+      .filter(Boolean)
+      .map((name) => [name.toLocaleLowerCase('ko-KR').replace(/\s+/g, ' '), name]),
+  ).values()].slice(0, 10)
+
+  if (uniqueFoods.length) {
+    const { error: foodRowsError } = await supabase
+      .from('meal_food_items')
+      .insert(uniqueFoods.map((foodName) => ({
+        meal_id: meal.id,
+        couple_id: coupleId,
+        user_id: userId,
+        food_name: foodName,
+      })))
+    if (foodRowsError) throw foodRowsError
   }
 
   const mealLabels = { breakfast: '아침', lunch: '점심', dinner: '저녁', snack: '간식', late_night: '야식' }
