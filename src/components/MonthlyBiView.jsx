@@ -3,6 +3,11 @@ import { getMonthlyBi } from '../services/monthlyBi'
 
 const monthKey = (date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-01`
 const monthLabel = (date) => new Intl.DateTimeFormat('ko-KR', { year: 'numeric', month: 'long' }).format(date)
+const stickerLabels = {
+  '🏋️': '운동', '🎓': '공부', '📖': '회의', '💼': '업무',
+  '🧳': '출장', '🗓️': '약속', '💗': '데이트', '🏥': '병원',
+  '🚙': '이동', '🏕️': '휴식', '✈️': '여행', '✨': '기타',
+}
 
 function PersonStats({ title, tone, stats }) {
   const goals = stats?.goals || {}
@@ -24,6 +29,23 @@ function PersonStats({ title, tone, stats }) {
         {stats?.topFoods?.length ? (
           <ol>{stats.topFoods.map((food) => <li key={food.name}><span>{food.name}</span><strong>{food.count}회</strong></li>)}</ol>
         ) : <p>등록된 음식명이 없어요.</p>}
+      </section>
+      <section className="bi-top-stickers">
+        <h4>월간 일정 스티커 TOP 5</h4>
+        {stats?.scheduleStickers?.monthly?.length ? (
+          <ol>{stats.scheduleStickers.monthly.map((item) => <li key={item.sticker}><span><i>{item.sticker}</i>{stickerLabels[item.sticker] || '기타'}</span><strong>{item.count}회</strong></li>)}</ol>
+        ) : <p>등록된 일정 스티커가 없어요.</p>}
+        <div className="bi-weekly-stickers">
+          <h4>주간별 일정 스티커</h4>
+          {stats?.scheduleStickers?.weekly?.map((week) => (
+            <div className="bi-sticker-week" key={week.startDate}>
+              <strong>{week.startDate.slice(5).replace('-', '.')} ~ {week.endDate.slice(5).replace('-', '.')}</strong>
+              {week.stickers.length ? (
+                <ul>{week.stickers.map((item) => <li key={item.sticker}><span>{item.sticker} {stickerLabels[item.sticker] || '기타'}</span><b>{item.count}회</b></li>)}</ul>
+              ) : <small>등록된 일정이 없어요.</small>}
+            </div>
+          ))}
+        </div>
       </section>
     </article>
   )
